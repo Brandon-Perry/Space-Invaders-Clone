@@ -20,10 +20,12 @@ player_ship.y = 50
 
 
 
+#Loads Aliens
+Aliens = Functions.aliens_on_screen(3,batch=Resources.main_batch)
 
 
 #list of game objects on screen
-game_objects = [player_ship]
+game_objects = [player_ship] + Aliens
 
 
 def update(dt):

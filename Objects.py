@@ -1,6 +1,7 @@
 import pyglet
 from pyglet.window import key
 import math
+import random
 
 #import game files
 import Resources
@@ -60,7 +61,7 @@ class Player(PhyiscalObject):
         #Ship physics
         self.thrust = 100.0
         self.mass = 1.0
-        self.rotate_speed = 50.0
+        self.rotate_speed = 75.0
         self.rotation = 0
         self.drag = .5
         
@@ -68,7 +69,7 @@ class Player(PhyiscalObject):
         self.key_handler = key.KeyStateHandler()
 
         #Bullet 
-        self.bullet_speed = 900.0
+        self.bullet_speed = 1000.0
         self.fireonce = True
 
     def update(self,dt):
@@ -143,7 +144,7 @@ class Player(PhyiscalObject):
 class Player_Bullet(PhyiscalObject):
     def __init__(self,*args,**kwargs):
         super(Player_Bullet,self).__init__(img=Resources.bullet_image,*args,**kwargs)
-        pyglet.clock.schedule_interval(self.check_bounds_bullet,.1)
+        pyglet.clock.schedule_interval(self.check_bounds_bullet,.05)
 
         self.is_bullet = True
 
@@ -165,8 +166,45 @@ class Player_Bullet(PhyiscalObject):
             self.die()
 
     
+class Alien(PhyiscalObject):
+    def __init__(self,*args,**kwargs):
+        super(Alien,self).__init__(img=Resources.alien_image, *args,**kwargs)
 
+        #If True, Alien is already taking a path in movement
+        pyglet.clock.schedule_interval(self.choose_direction,2)
+        self.movement = False
+        self.movement_time = None
     
+    def update(self,dt):
+
+        super(Alien,self).update(dt)
+
+        #Handles Alien movement
+        
+        if self.movement == False:
+            self.choose_direction(dt)
+            self.movement = True
+        else:
+            pass
+
+        
+    def choose_direction(self,dt):
+
+        new_x_velocity = random.randint(-50,50)
+        new_y_velocity = random.randint(-20,20)
+
+        if self.x <= 75:
+            new_x_velocity += 100
+        elif self.x >= 750:
+            new_x_velocity -= 100
+        if self.y >= 550:
+            new_y_velocity -= 100
+
+        self.velocity_x = new_x_velocity
+        self.velocity_y = new_y_velocity
+
+        self.movement_time = random.randint(1,5)
+        
 
 
 

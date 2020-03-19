@@ -7,6 +7,7 @@ pyglet.resource.reindex()
 #creates images for player
 player_image = pyglet.resource.image('space_ship.png')
 bullet_image = pyglet.resource.image('lazer.png')
+alien_image = pyglet.resource.image('alien.png')
 
 
 #Edits images
@@ -17,6 +18,8 @@ def center_image(image):
     image.anchor_y = image.height // 2
 
 center_image(player_image)
+center_image(bullet_image)
+center_image(alien_image)
 
 
 #Batches
