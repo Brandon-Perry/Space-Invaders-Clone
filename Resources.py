@@ -6,7 +6,7 @@ pyglet.resource.reindex()
 
 #creates images for player
 player_image = pyglet.resource.image('space_ship.png')
-
+bullet_image = pyglet.resource.image('lazer.png')
 
 
 #Edits images

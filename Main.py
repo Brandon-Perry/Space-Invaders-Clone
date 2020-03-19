@@ -27,8 +27,20 @@ game_objects = [player_ship]
 
 
 def update(dt):
+    
+    #Updates objects and adds objects to game
+    to_add = []
+
     for obj in game_objects:
         obj.update(dt)
+        game_objects.extend(obj.new_objects)
+        obj.new_objects = []
+
+    for to_remove in [obj for obj in game_objects if obj.dead]:
+        to_remove.delete()
+        game_objects.remove(to_remove)
+
+    game_objects.extend(to_add)
 
 
 @window.event
