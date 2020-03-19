@@ -15,8 +15,8 @@ window = pyglet.window.Window(800,600)
 
 #Loads Sprites
 player_ship = Objects.Player(x=100,y=100, batch=Resources.main_batch)
-player_ship.x = 100
-player_ship.y = 200
+player_ship.x = 400
+player_ship.y = 50
 
 
 
