@@ -1,0 +1,43 @@
+#Import modules
+import pyglet 
+import math
+import random
+
+#Game files
+import Objects
+import Functions
+import Resources
+
+###
+#Game Window
+window = pyglet.window.Window(800,600)
+###
+
+#Loads Sprites
+player_ship = Objects.Player(x=100,y=100, batch=Resources.main_batch)
+player_ship.x = 100
+player_ship.y = 200
+
+
+
+
+
+#list of game objects on screen
+game_objects = [player_ship]
+
+
+def update(dt):
+    for obj in game_objects:
+        obj.update(dt)
+
+
+@window.event
+def on_draw():
+    window.clear()
+    Resources.main_batch.draw()
+    window.push_handlers(player_ship.key_handler)
+
+
+if __name__ == "__main__":
+    pyglet.clock.schedule_interval(update,1/120.0)
+    pyglet.app.run()
