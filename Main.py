@@ -13,23 +13,28 @@ import Resources
 window = pyglet.window.Window(800,600)
 ###
 
-#Loads Sprites
-player_ship = Objects.Player(x=100,y=100, batch=Resources.main_batch)
-player_ship.x = 400
-player_ship.y = 50
-
-
 
 #Loads Aliens
 Aliens = Functions.aliens_on_screen(3,batch=Resources.main_batch)
 
 
 #list of game objects on screen
-game_objects = [player_ship] + Aliens
+game_objects = [Objects.player_ship] + Aliens
 
 
 def update(dt):
     
+    #Checks each object active to see if collision kills
+    for i in range(len(game_objects)):
+        for j in range(i+1, len(game_objects)):
+            obj_1 = game_objects[i]
+            obj_2 = game_objects[j]
+
+            if not obj_1.dead and not obj_2.dead:
+                if obj_1.collides_with(obj_2):
+                    obj_1.handle_collision_with(obj_2)
+                    obj_2.handle_collision_with(obj_1)
+
     #Updates objects and adds objects to game
     to_add = []
 
@@ -49,7 +54,7 @@ def update(dt):
 def on_draw():
     window.clear()
     Resources.main_batch.draw()
-    window.push_handlers(player_ship.key_handler)
+    window.push_handlers(Objects.player_ship.key_handler)
 
 
 if __name__ == "__main__":
