@@ -30,7 +30,7 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         self.velocity_y = 0.0
 
         #Gravity
-        self.gravity = 2.81
+        self.gravity = 5
 
         #Is object alive?
         self.dead = False
@@ -103,7 +103,9 @@ class PhyiscalObject(pyglet.sprite.Sprite):
             self.dead = False
         elif self.__class__ == Alien:
             self.health -= 1
-            if self.health == 0:
+            if self.health == 1:
+                self.fall()
+            elif self.health == 0:
                 self.dead = True
             else:
                 self.destructable = False
@@ -262,53 +264,62 @@ class Alien(PhyiscalObject):
         pyglet.clock.schedule_interval(self.choose_direction,self.movement_time)
         pyglet.clock.schedule_interval(self.fire,2)
         self.movement = False
-        self.health = 3
+        self.health = 2
+        self.is_falling = False
 
         #Alien bullet object
         self.bullet_speed = 500
         self.reacts_to_bullets = True
         self.reacts_to_alien_bullets = False
         
-    
-    def update(self,dt):
+    def update(self, dt):
 
         super(Alien,self).update(dt)
 
-        #Handles Alien movement
+        if self.is_falling is True:
+            self.velocity_y -= self.gravity
+            if self.y <= 50:
+                self.dead = True
+
+    
+    def choose_direction(self,dt):
         
-        if self.movement == False:
-            self.choose_direction(dt)
-            self.movement = True
+        if self.is_falling is False:
+
+            new_x_velocity = random.randint(-100,100)
+            new_y_velocity = random.randint(-100,100)
+
+            if self.x <= 75:
+                new_x_velocity += 100
+            elif self.x >= 750:
+                new_x_velocity -= 100
+            if self.y >= 550:
+                new_y_velocity -= 100
+            if self.y <= 100:
+                new_y_velocity += 100
+
+            self.velocity_x = new_x_velocity
+            self.velocity_y = new_y_velocity
+
+            self.movement_time = random.randint(1,5)
+        
         else:
             pass
-  
-    def choose_direction(self,dt):
-
-        new_x_velocity = random.randint(-100,100)
-        new_y_velocity = random.randint(-100,100)
-
-        if self.x <= 75:
-            new_x_velocity += 100
-        elif self.x >= 750:
-            new_x_velocity -= 100
-        if self.y >= 550:
-            new_y_velocity -= 100
-        if self.y <= 100:
-            new_y_velocity += 100
-
-        self.velocity_x = new_x_velocity
-        self.velocity_y = new_y_velocity
-
-        self.movement_time = random.randint(1,5)
 
     def damage_picture(self,dt):
         
         self.image = Resources.alien_image
         self.destructable = True
 
-    def fall(self,dt):
-        pass
+    def fall(self):
         
+        self.image = Resources.alien_damage_image
+        print('is falling')
+        self.is_falling = True
+
+        self.velocity_y -= self.gravity
+
+
     def fire(self,dt):
         #Fire so the bullet goes the direction the ship is facing and take into account ship velocities
         if self.dead is False:
@@ -333,6 +344,8 @@ class Alien(PhyiscalObject):
             pass
 
 
+class Barrier(PhyiscalObject):
+    pass
 
 
 
