@@ -32,5 +32,3 @@ center_image(alien_bullet)
 main_batch = pyglet.graphics.Batch()
 effects_batch = pyglet.graphics.Batch()
 
-#Effect Sprites List
-effects_list = []

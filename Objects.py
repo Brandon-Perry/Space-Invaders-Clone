@@ -104,20 +104,24 @@ class PhyiscalObject(pyglet.sprite.Sprite):
     def explosion(self,obj_x = 0.0,obj_y = 0.0):
         explosion_sprite = pyglet.sprite.Sprite(img=Resources.explosion,batch=Resources.effects_batch,x=obj_x,y=obj_y)
         explosion_sprite.scale = .75
-        Resources.effects_list.append(explosion_sprite)
         self.dead = True
         
         #Makes sure the explosion only happens once
         duration = pyglet.image.Animation.get_duration(Resources.explosion)
-        remove_explosion = pyglet.sprite.Sprite.delete(explosion_sprite)
+        def remove_explosion(t):
+            pyglet.sprite.Sprite.delete(explosion_sprite)
+         
         pyglet.clock.schedule_once(remove_explosion,duration)
+
+        
+        
         
 class Player(PhyiscalObject):
     def __init__(self,x=400.0,y=100.0,*args,**kwargs):
         super().__init__(img=Resources.player_image,*args,**kwargs)
 
         #Ship physics
-        self.thrust = 100.0
+        self.thrust = 200.0
         self.mass = 1.0
         self.rotate_speed = 75.0
         self.rotation = 0
@@ -259,7 +263,7 @@ class Alien(PhyiscalObject):
 
         #If True, Alien is already taking a path in movement
         self.movement = False
-        self.health = 2
+        self.health = 3
         self.is_falling = False
 
         #Alien bullet object
