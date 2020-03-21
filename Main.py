@@ -50,10 +50,12 @@ def update(dt):
     game_objects.extend(to_add)
 
 
+
 @window.event
 def on_draw():
     window.clear()
     Resources.main_batch.draw()
+    Resources.effects_batch.draw()  
     window.push_handlers(Objects.player_ship.key_handler)
 
 

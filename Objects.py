@@ -5,15 +5,7 @@ import random
 
 #import game files
 import Resources
-
-#Local Functions
-def distance(point_1=(0,0), point_2=(0,0)):
-    #returns the distance between two points
-
-    return math.sqrt((point_1[0] - point_2[0]) ** 2 + (point_1[1] - point_2[1]) ** 2)
-
-def angle(point_1=(0,0), point_2=(0,0)):
-    return math.atan2(point_2[1] - point_1[1],point_2[0] - point_1[0])
+import Object_Functions
 
 #GENERAL PHYSICAL OBJECTS
 class PhyiscalObject(pyglet.sprite.Sprite):
@@ -36,7 +28,7 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         self.dead = False
         self.destructable = True
 
-        #Objects to be added to game
+        #Objects to be added to game, used for player and alien bullets
         self.new_objects = []
 
         #How the object react to bullets
@@ -44,11 +36,9 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         self.reacts_to_alien_bullets = True
         self.is_bullet = False
         self.is_alien_bullet = False
-        self.is_alien = False
 
         #Heath of Object
         self.health = 0
-
 
     def update(self,dt):
         #Velocity and how it affects movement (dt is frame)
@@ -89,32 +79,39 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         if self.is_alien_bullet and not other_object.reacts_to_alien_bullets:
             return False
 
+        #Calculates collision distance 
         collision_distance = self.image.width/2 + other_object.image.width/2
-        actual_distance = distance(self.position,other_object.position)
+        actual_distance = Object_Functions.distance(self.position,other_object.position)
         return (actual_distance <= collision_distance)
 
     def handle_collision_with(self,other_object):
         
-        #Don't collide with objects of the same class, indestructable items, and if its an alien then change the picture and make indestructable for a short time
-
+        #If object is the same type, don't collide
         if other_object.__class__ == self.__class__:
             self.dead = False
+        
+        #If object is indestructable, don't collide
         elif self.destructable == False:
             self.dead = False
-        elif self.__class__ == Alien:
-            self.health -= 1
-            if self.health == 1:
-                self.fall()
-            elif self.health == 0:
-                self.dead = True
-            else:
-                self.destructable = False
-                self.image = Resources.alien_damage_image
-                pyglet.clock.schedule_once(self.damage_picture,1)
+
+        #If object is Alien, then:
+        elif self.__class__ == Alien: 
+            self.alien_collision()
+
         else:
             self.dead = True
 
-
+    def explosion(self,obj_x = 0.0,obj_y = 0.0):
+        explosion_sprite = pyglet.sprite.Sprite(img=Resources.explosion,batch=Resources.effects_batch,x=obj_x,y=obj_y)
+        explosion_sprite.scale = .75
+        Resources.effects_list.append(explosion_sprite)
+        self.dead = True
+        
+        #Makes sure the explosion only happens once
+        duration = pyglet.image.Animation.get_duration(Resources.explosion)
+        remove_explosion = pyglet.sprite.Sprite.delete(explosion_sprite)
+        pyglet.clock.schedule_once(remove_explosion,duration)
+        
 class Player(PhyiscalObject):
     def __init__(self,x=400.0,y=100.0,*args,**kwargs):
         super().__init__(img=Resources.player_image,*args,**kwargs)
@@ -256,13 +253,11 @@ class Alien_Bullet(PhyiscalObject):
 
 class Alien(PhyiscalObject):
     def __init__(self,*args,**kwargs):
-        self.movement_time = 1
         
         super(Alien,self).__init__(img=Resources.alien_image, *args,**kwargs)
 
+
         #If True, Alien is already taking a path in movement
-        pyglet.clock.schedule_interval(self.choose_direction,self.movement_time)
-        pyglet.clock.schedule_interval(self.fire,2)
         self.movement = False
         self.health = 2
         self.is_falling = False
@@ -271,16 +266,31 @@ class Alien(PhyiscalObject):
         self.bullet_speed = 500
         self.reacts_to_bullets = True
         self.reacts_to_alien_bullets = False
+        self.firestatus = False
         
     def update(self, dt):
 
         super(Alien,self).update(dt)
 
+        #Handles falling
         if self.is_falling is True:
             self.velocity_y -= self.gravity
             if self.y <= 50:
-                self.dead = True
+                self.explosion(self.x,self.y)
+        
+        #Handles movement updates       
+        elif self.movement == False:
+            time = random.uniform(0.01,1.5)
+            self.choose_direction(dt)
+            self.change_movement_status(dt)
+            pyglet.clock.schedule_once(self.change_movement_status,time)
 
+        
+        #Handles Firing
+        if self.firestatus is False:
+            firetime = random.uniform(.75,1.5)
+            pyglet.clock.schedule_once(self.fire,firetime)
+            self.firestatus = True
     
     def choose_direction(self,dt):
         
@@ -301,10 +311,27 @@ class Alien(PhyiscalObject):
             self.velocity_x = new_x_velocity
             self.velocity_y = new_y_velocity
 
-            self.movement_time = random.randint(1,5)
+            self.movement = False
         
         else:
             pass
+    
+    def alien_collision(self):
+        self.health -= 1
+            
+        #Alien ship falls
+        if self.health == 1:
+            self.fall()
+        
+        #Alien ship dies
+        elif self.health == 0:
+            self.explosion(self.x,self.y)
+            
+
+        else: #If Alien isn't dead or falling, then make them indestructable for a second and replace with alien damage picture
+            self.destructable = False
+            self.image = Resources.alien_damage_image
+            pyglet.clock.schedule_once(self.damage_picture,1)
 
     def damage_picture(self,dt):
         
@@ -313,17 +340,19 @@ class Alien(PhyiscalObject):
 
     def fall(self):
         
+        #Sets image to alien_damage
         self.image = Resources.alien_damage_image
-        print('is falling')
         self.is_falling = True
 
         self.velocity_y -= self.gravity
 
+        self.rotation = -45
 
     def fire(self,dt):
+        
         #Fire so the bullet goes the direction the ship is facing and take into account ship velocities
         if self.dead is False:
-            angle_to_player = math.degrees(angle(self.position,player_ship.position))
+            angle_to_player = math.degrees(Object_Functions.angle(self.position,player_ship.position))
             variance_in_shot = random.randint(-30,30)
 
             angle_radians = -math.radians(self.rotation - angle_to_player + variance_in_shot)
@@ -340,9 +369,17 @@ class Alien(PhyiscalObject):
             new_bullet.rotation = self.rotation
 
             self.new_objects.append(new_bullet)
+
+            self.firestatus = False
+
         else:
             pass
 
+    def change_movement_status(self,dt):
+        if self.movement is True:
+            self.movement = False
+        elif self.movement is False:
+            self.movement = True
 
 class Barrier(PhyiscalObject):
     pass

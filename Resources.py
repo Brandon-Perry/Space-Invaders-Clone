@@ -10,6 +10,7 @@ bullet_image = pyglet.resource.image('lazer.png')
 alien_image = pyglet.resource.image('alien.png')
 alien_damage_image = pyglet.resource.image('alien_damage.png')
 alien_bullet = pyglet.resource.image('alien_lazer.png')
+explosion = pyglet.resource.animation('explosion.gif')
 
 
 #Edits images
@@ -26,5 +27,10 @@ center_image(alien_damage_image)
 center_image(alien_bullet)
 
 
+
 #Batches
 main_batch = pyglet.graphics.Batch()
+effects_batch = pyglet.graphics.Batch()
+
+#Effect Sprites List
+effects_list = []
