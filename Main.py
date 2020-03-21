@@ -14,13 +14,22 @@ window = pyglet.window.Window(800,600)
 ###
 
 
+#Labels
+score_label = pyglet.text.Label(text="Score: " + str(Objects.player_ship.points),x=25,y=550,batch=Resources.label_batch)
+lives_label = Functions.player_lives(3,batch=Resources.label_batch)
+
+
+
 #Loads Aliens
 Aliens = Functions.aliens_on_screen(3,batch=Resources.main_batch)
 
+#Loads Barriers
+Barriers = Functions.generate_barriers(5,batch=Resources.main_batch)
+
 
 #list of game objects on screen
-game_objects = [Objects.player_ship] + Aliens
-
+game_objects = [Objects.player_ship] + Aliens + Barriers 
+ 
 
 def update(dt):
     
@@ -49,6 +58,9 @@ def update(dt):
 
     game_objects.extend(to_add)
 
+    
+    score_label.text="Score: " + str(Objects.player_ship.points)
+    
 
 
 @window.event
@@ -56,6 +68,7 @@ def on_draw():
     window.clear()
     Resources.main_batch.draw()
     Resources.effects_batch.draw()  
+    Resources.label_batch.draw()
     window.push_handlers(Objects.player_ship.key_handler)
 
 

@@ -98,6 +98,19 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         elif self.__class__ == Alien: 
             self.alien_collision()
 
+        #If object is barrier, don't damage Player
+        elif self.__class__ == Barrier:
+            if other_object.__class__ == Player:
+                self.ship_barrier_collision()
+            else:
+                self.barrier_collision()
+
+        elif self.__class__ == Player:
+            if other_object.__class__ == Barrier:
+                pass
+            else:
+                self.dead = True
+
         else:
             self.dead = True
 
@@ -112,8 +125,6 @@ class PhyiscalObject(pyglet.sprite.Sprite):
             pyglet.sprite.Sprite.delete(explosion_sprite)
          
         pyglet.clock.schedule_once(remove_explosion,duration)
-
-        
         
         
 class Player(PhyiscalObject):
@@ -134,6 +145,9 @@ class Player(PhyiscalObject):
         self.bullet_speed = 1000.0
         self.fireonce = True
         self.reacts_to_bullets = False
+
+        #Player's points
+        self.points = 0
 
     def update(self,dt):
 
@@ -204,6 +218,14 @@ class Player(PhyiscalObject):
 
         self.new_objects.append(new_bullet)
 
+    def ship_barrier_collision(self):
+        pass
+
+    def hit_alien(self):
+        self.points += 100
+
+    def kill_alien(self):
+        self.points += 1000
 
 class Player_Bullet(PhyiscalObject):
     def __init__(self,*args,**kwargs):
@@ -322,7 +344,8 @@ class Alien(PhyiscalObject):
     
     def alien_collision(self):
         self.health -= 1
-            
+        player_ship.hit_alien()
+
         #Alien ship falls
         if self.health == 1:
             self.fall()
@@ -330,6 +353,7 @@ class Alien(PhyiscalObject):
         #Alien ship dies
         elif self.health == 0:
             self.explosion(self.x,self.y)
+            player_ship.kill_alien()
             
 
         else: #If Alien isn't dead or falling, then make them indestructable for a second and replace with alien damage picture
@@ -370,7 +394,10 @@ class Alien(PhyiscalObject):
             new_bullet.velocity_x = bullet_vx
             new_bullet.velocity_y = bullet_vy
 
-            new_bullet.rotation = self.rotation
+            #Sets rotation of the bullet
+            
+            #bullet_angle = math.degrees(math.cos(self.velocity_y/Object_Functions.distance(new_bullet.position,player_ship.position)))
+            #new_bullet.rotation = bullet_angle
 
             self.new_objects.append(new_bullet)
 
@@ -385,8 +412,50 @@ class Alien(PhyiscalObject):
         elif self.movement is False:
             self.movement = True
 
+
 class Barrier(PhyiscalObject):
-    pass
+    def __init__(self,*args,**kwargs):
+
+        super(Barrier,self).__init__(img=Resources.barrier,*args,**kwargs)
+
+        self.health = 5
+        self.destructable = True
+        self.is_bullet = False
+        self.is_alien_bullet = False
+        self.reacts_to_alien_bullets = True
+        self.reacts_to_bullets = True
+
+    def barrier_collision(self):
+        self.health -= 1
+        
+        self.destructable = False
+        self.image = Resources.barrier_damage
+        
+        def temp(dt):
+            self.image = Resources.barrier
+            self.destructable = True
+            if self.health <= 0:
+                self.dead = True
+
+        pyglet.clock.schedule_once(temp,.25)
+
+    def update(self,dt):
+        super(Barrier,self).update(dt)
+
+        if self.velocity_y > 0:
+            self.velocity_y -= 5
+        else:
+            self.velocity_y = 0
+
+
+    def ship_barrier_collision(self):
+        self.velocity_y += player_ship.velocity_y * .1
+
+        
+
+
+
+        
 
 
 
