@@ -38,9 +38,30 @@ def generate_barriers(num_barriers,batch=None):
 
 
 def player_lives(num_lives,batch=None):
+    
+    
     player_lives = []
+    
+    
     for i in range(num_lives):
         new_sprite = pyglet.sprite.Sprite(img=Resources.player_image,x=750-i*30,y=550,batch=batch)
         new_sprite.scale = 0.5
         player_lives.append(new_sprite)
     return player_lives
+
+
+def respawn(lives,add_list,player,x_func,batch=None):
+
+    lives -= 1
+
+    if lives > 0:
+        player.dead = False
+        add_list.append(player)
+        x_func(lives,batch=batch)
+
+    else:
+        #END GAME
+        pass
+
+
+

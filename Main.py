@@ -7,6 +7,7 @@ import random
 import Objects
 import Functions
 import Resources
+import Sprites
 
 ###
 #Game Window
@@ -14,21 +15,14 @@ window = pyglet.window.Window(800,600)
 ###
 
 
+
 #Labels
 score_label = pyglet.text.Label(text="Score: " + str(Objects.player_ship.points),x=25,y=550,batch=Resources.label_batch)
-lives_label = Functions.player_lives(3,batch=Resources.label_batch)
-
-
-
-#Loads Aliens
-Aliens = Functions.aliens_on_screen(3,batch=Resources.main_batch)
-
-#Loads Barriers
-Barriers = Functions.generate_barriers(5,batch=Resources.main_batch)
+lives_label = Functions.player_lives(Objects.player_ship.lives,batch=Resources.label_batch)
 
 
 #list of game objects on screen
-game_objects = [Objects.player_ship] + Aliens + Barriers 
+game_objects = [Objects.player_ship] + Sprites.Aliens + Sprites.Barriers 
  
 
 def update(dt):
@@ -58,7 +52,7 @@ def update(dt):
 
     game_objects.extend(to_add)
 
-    
+    #Score update
     score_label.text="Score: " + str(Objects.player_ship.points)
     
 

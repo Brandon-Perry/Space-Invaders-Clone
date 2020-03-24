@@ -7,6 +7,7 @@ import random
 import Resources
 import Object_Functions
 
+
 #GENERAL PHYSICAL OBJECTS
 class PhyiscalObject(pyglet.sprite.Sprite):
     
@@ -84,7 +85,7 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         actual_distance = Object_Functions.distance(self.position,other_object.position)
         return (actual_distance <= collision_distance)
 
-    def handle_collision_with(self,other_object):
+    def handle_collision_with(self,other_object):  #need to make it so player ship and aliens can't pass through barrier
         
         #If object is the same type, don't collide
         if other_object.__class__ == self.__class__:
@@ -101,7 +102,7 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         #If object is barrier, don't damage Player
         elif self.__class__ == Barrier:
             if other_object.__class__ == Player:
-                self.ship_barrier_collision()
+                self.ship_barrier_collision(other_object)
             else:
                 self.barrier_collision()
 
@@ -109,7 +110,8 @@ class PhyiscalObject(pyglet.sprite.Sprite):
             if other_object.__class__ == Barrier:
                 pass
             else:
-                self.dead = True
+                self.player_dies()
+
 
         else:
             self.dead = True
@@ -146,8 +148,9 @@ class Player(PhyiscalObject):
         self.fireonce = True
         self.reacts_to_bullets = False
 
-        #Player's points
+        #Player's attributes
         self.points = 0
+        self.lives = 3
 
     def update(self,dt):
 
@@ -180,8 +183,8 @@ class Player(PhyiscalObject):
 
         #Bounds rotation and returns to normal when not accelerating - also features drag to slow the ship down
         normal_rotation = 0
-        min_rotation = -30
-        max_rotation = 30
+        min_rotation = -50
+        max_rotation = 50
 
         if self.rotation >= max_rotation:
             self.rotation = max_rotation
@@ -227,6 +230,10 @@ class Player(PhyiscalObject):
     def kill_alien(self):
         self.points += 1000
 
+    def player_dies(self):
+        self.dead = True
+
+        
 class Player_Bullet(PhyiscalObject):
     def __init__(self,*args,**kwargs):
         super(Player_Bullet,self).__init__(img=Resources.bullet_image,*args,**kwargs)
@@ -278,6 +285,7 @@ class Alien_Bullet(PhyiscalObject):
 
 
 class Alien(PhyiscalObject):
+    
     def __init__(self,*args,**kwargs):
         
         super(Alien,self).__init__(img=Resources.alien_image, *args,**kwargs)
@@ -342,9 +350,9 @@ class Alien(PhyiscalObject):
         else:
             pass
     
-    def alien_collision(self):
+    def alien_collision(self): ####Needs to be fixed with player ship 
         self.health -= 1
-        player_ship.hit_alien()
+        #player_ship.hit_alien()
 
         #Alien ship falls
         if self.health == 1:
@@ -353,7 +361,7 @@ class Alien(PhyiscalObject):
         #Alien ship dies
         elif self.health == 0:
             self.explosion(self.x,self.y)
-            player_ship.kill_alien()
+            #player_ship.kill_alien()
             
 
         else: #If Alien isn't dead or falling, then make them indestructable for a second and replace with alien damage picture
@@ -372,11 +380,11 @@ class Alien(PhyiscalObject):
         self.image = Resources.alien_damage_image
         self.is_falling = True
 
-        self.velocity_y -= self.gravity
+        #self.velocity_y -= self.gravity
 
         self.rotation = -45
 
-    def fire(self,dt):
+    def fire(self,dt): ####Needs to be fixed with player ship
         
         #Fire so the bullet goes the direction the ship is facing and take into account ship velocities
         if self.dead is False:
@@ -447,19 +455,13 @@ class Barrier(PhyiscalObject):
         else:
             self.velocity_y = 0
 
-
-    def ship_barrier_collision(self):
-        self.velocity_y += player_ship.velocity_y * .1
-
-        
-
-
+    def ship_barrier_collision(self,other_object):
+        self.velocity_y += other_object.velocity_y * .1
 
         
 
-
-
-#Loads Sprites
+#Player Sprite
 player_ship = Player(x=100,y=100, batch=Resources.main_batch)
 player_ship.x = 400
 player_ship.y = 50
+

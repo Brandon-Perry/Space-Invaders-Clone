@@ -32,6 +32,7 @@ center_image(barrier_damage)
 
 barrier.scale = 3
 
+
 #Batches
 main_batch = pyglet.graphics.Batch()
 effects_batch = pyglet.graphics.Batch()
