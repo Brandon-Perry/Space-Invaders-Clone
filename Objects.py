@@ -226,6 +226,7 @@ class Player(PhyiscalObject):
 
     def hit_alien(self):
         self.points += 100
+        print(self.points)
 
     def kill_alien(self):
         self.points += 1000
@@ -352,7 +353,7 @@ class Alien(PhyiscalObject):
     
     def alien_collision(self): ####Needs to be fixed with player ship 
         self.health -= 1
-        #player_ship.hit_alien()
+        player_ship.hit_alien()
 
         #Alien ship falls
         if self.health == 1:
@@ -361,7 +362,7 @@ class Alien(PhyiscalObject):
         #Alien ship dies
         elif self.health == 0:
             self.explosion(self.x,self.y)
-            #player_ship.kill_alien()
+            player_ship.kill_alien()
             
 
         else: #If Alien isn't dead or falling, then make them indestructable for a second and replace with alien damage picture
