@@ -3,6 +3,7 @@ import pyglet
 import Objects
 import Resources
 
+
 def aliens_on_screen(num_aliens,batch=None):
 
     new_aliens = []
@@ -37,7 +38,7 @@ def generate_barriers(num_barriers,batch=None):
     return new_barriers
 
 
-def player_lives(num_lives,batch=None):
+def player_lives(num_lives=0,batch=None):
     
     
     player_lives = []
@@ -48,20 +49,25 @@ def player_lives(num_lives,batch=None):
         new_sprite.scale = 0.5
         player_lives.append(new_sprite)
     return player_lives
+  
 
+def respawn(player,add_list):
 
-def respawn(lives,add_list,player,x_func,batch=None):
-
-    lives -= 1
-
-    if lives > 0:
+    if player.lives > 0:
+    
         player.dead = False
         add_list.append(player)
-        x_func(lives,batch=batch)
-
+        player.x = 400
+        player.y = 100
     else:
-        #END GAME
         pass
+
+def check_endgame(player):
+    if player.lives <= 0:
+        return True
+    else:
+        return False
+
 
 
 

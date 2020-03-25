@@ -37,3 +37,4 @@ barrier.scale = 3
 main_batch = pyglet.graphics.Batch()
 effects_batch = pyglet.graphics.Batch()
 label_batch = pyglet.graphics.Batch()
+end_batch = pyglet.graphics.Batch()

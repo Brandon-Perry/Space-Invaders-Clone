@@ -15,18 +15,17 @@ window = pyglet.window.Window(800,600)
 ###
 
 
-
 #Labels
 score_label = pyglet.text.Label(text="Score: " + str(Objects.player_ship.points),x=25,y=550,batch=Resources.label_batch)
-lives_label = Functions.player_lives(Objects.player_ship.lives,batch=Resources.label_batch)
 
 
 #list of game objects on screen
 game_objects = [Objects.player_ship] + Sprites.Aliens + Sprites.Barriers 
- 
+
+
+
 
 def update(dt):
-    
     #Checks each object active to see if collision kills
     for i in range(len(game_objects)):
         for j in range(i+1, len(game_objects)):
@@ -47,24 +46,43 @@ def update(dt):
         obj.new_objects = []
 
     for to_remove in [obj for obj in game_objects if obj.dead]:
-        to_remove.delete()
+        if not to_remove == Objects.player_ship:
+            to_remove.delete() 
+        if to_remove == Objects.player_ship:
+            Functions.respawn(Objects.player_ship,game_objects)
         game_objects.remove(to_remove)
 
     game_objects.extend(to_add)
 
     #Score update
     score_label.text="Score: " + str(Objects.player_ship.points)
-    
+      
+
 
 
 @window.event
 def on_draw():
-    window.clear()
-    Resources.main_batch.draw()
-    Resources.effects_batch.draw()  
-    Resources.label_batch.draw()
-    window.push_handlers(Objects.player_ship.key_handler)
+    end_game = Functions.check_endgame(Objects.player_ship)
+    if end_game == False:
+        window.clear()
+        Resources.main_batch.draw()
+        Resources.effects_batch.draw()  
+        Resources.label_batch.draw()
+        window.push_handlers(Objects.player_ship.key_handler)
+    elif end_game == True:
+        window.clear()
+        end_text = pyglet.text.Label("Oh dear! You've lost the game ;)",x=window.height/2,y=window.width/2)
+        end_text.draw()
 
+        start_again_text = pyglet.text.Label("Press Y to start again. Press N to quit",x=end_text.x,y=end_text.y-100)
+        start_again_text.draw()
+
+        
+        Resources.end_batch.draw()
+        window.push_handlers(Objects.end_obj.key_handler)
+        
+        
+            
 
 if __name__ == "__main__":
     pyglet.clock.schedule_interval(update,1/120.0)

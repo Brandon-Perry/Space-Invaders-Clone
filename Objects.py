@@ -150,7 +150,7 @@ class Player(PhyiscalObject):
 
         #Player's attributes
         self.points = 0
-        self.lives = 3
+        self.lives = 1
 
     def update(self,dt):
 
@@ -226,13 +226,15 @@ class Player(PhyiscalObject):
 
     def hit_alien(self):
         self.points += 100
-        print(self.points)
 
     def kill_alien(self):
         self.points += 1000
 
     def player_dies(self):
         self.dead = True
+        self.lives -= 1
+        print(self.lives)
+        self.explosion(obj_x=self.x,obj_y=self.y)
 
         
 class Player_Bullet(PhyiscalObject):
@@ -351,7 +353,7 @@ class Alien(PhyiscalObject):
         else:
             pass
     
-    def alien_collision(self): ####Needs to be fixed with player ship 
+    def alien_collision(self):  
         self.health -= 1
         player_ship.hit_alien()
 
@@ -459,10 +461,22 @@ class Barrier(PhyiscalObject):
     def ship_barrier_collision(self,other_object):
         self.velocity_y += other_object.velocity_y * .1
 
-        
+
+class EndGame(pyglet.sprite.Sprite):
+    
+    def __init__(self, x=0,y=0, *args,**kwargs):
+        self.key_handler = key.KeyStateHandler()
+        #self.x = x
+        #self.game_window = game_window
+
+    def update(self,dt):
+        if self.key_handler[key.SPACE]:
+            print('True')
+
 
 #Player Sprite
 player_ship = Player(x=100,y=100, batch=Resources.main_batch)
 player_ship.x = 400
 player_ship.y = 50
 
+end_obj = EndGame(x=400,y=400,batch=Resources.end_batch)
