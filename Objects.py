@@ -466,12 +466,27 @@ class EndGame(pyglet.sprite.Sprite):
     
     def __init__(self, x=0,y=0, *args,**kwargs):
         self.key_handler = key.KeyStateHandler()
+        self.dead = False
         #self.x = x
         #self.game_window = game_window
 
     def update(self,dt):
-        if self.key_handler[key.SPACE]:
+        if self.key_handler[key.Y]:
             print('True')
+        elif self.key_handler[key.N]:
+            print('False')
+
+class Title(pyglet.sprite.Sprite):
+    
+    def __init__(self, x=0,y=0, *args,**kwargs):
+        self.key_handler = key.KeyStateHandler()
+        self.dead = False
+        #self.x = x
+        #self.game_window = game_window
+
+    def update(self,dt):
+        if self.key_handler[key.ENTER]:
+            self.dead = True
 
 
 #Player Sprite
@@ -480,3 +495,5 @@ player_ship.x = 400
 player_ship.y = 50
 
 end_obj = EndGame(x=400,y=400,batch=Resources.end_batch)
+
+title_obj = Title(x=0,y=0,batch=Resources.title_batch)

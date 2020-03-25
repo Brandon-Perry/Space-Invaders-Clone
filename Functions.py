@@ -69,5 +69,37 @@ def check_endgame(player):
         return False
 
 
+def collision_check(game_objects):
+    #Checks each object active to see if collision kills
+    for i in range(len(game_objects)):
+        for j in range(i+1, len(game_objects)):
+            obj_1 = game_objects[i]
+            obj_2 = game_objects[j]
 
+            if not obj_1.dead and not obj_2.dead:
+                if obj_1.collides_with(obj_2):
+                    obj_1.handle_collision_with(obj_2)
+                    obj_2.handle_collision_with(obj_1)
 
+def update_and_add_game_objects(game_objects,dt):
+    #Updates objects and adds objects to game
+    to_add = []
+
+    for obj in game_objects:
+        obj.update(dt)
+        game_objects.extend(obj.new_objects)
+        obj.new_objects = []
+
+    for to_remove in [obj for obj in game_objects if obj.dead]:
+        if not to_remove == Objects.player_ship:
+            to_remove.delete() 
+        if to_remove == Objects.player_ship:
+            respawn(Objects.player_ship,game_objects)
+        game_objects.remove(to_remove)
+
+    game_objects.extend(to_add)
+
+def update_titles(dt):
+    title_obj = [Objects.title_obj,Objects.end_obj]
+    for obj in title_obj:
+        obj.update(dt)
