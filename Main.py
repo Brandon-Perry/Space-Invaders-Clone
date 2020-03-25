@@ -28,14 +28,18 @@ game_objects = [Objects.player_ship] + Sprites.Aliens + Sprites.Barriers
 
 def update(dt):
     
-    Functions.collision_check(game_objects)
+    if Objects.title_obj.dead == True:
+        Functions.collision_check(game_objects)
 
-    Functions.update_and_add_game_objects(game_objects,dt)
+        Functions.update_and_add_game_objects(game_objects,dt)
+        #Score update
+        score_label.text="Score: " + str(Objects.player_ship.points)
+        
+    else:
 
-    Functions.update_titles(dt)
+        Functions.update_titles(dt)
 
-    #Score update
-    score_label.text="Score: " + str(Objects.player_ship.points)
+    
       
 
 
