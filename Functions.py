@@ -62,6 +62,7 @@ def respawn(player,add_list):
     else:
         pass
 
+
 def check_endgame(player):
     if player.lives <= 0:
         return True
@@ -81,6 +82,7 @@ def collision_check(game_objects):
                     obj_1.handle_collision_with(obj_2)
                     obj_2.handle_collision_with(obj_1)
 
+
 def update_and_add_game_objects(game_objects,dt):
     #Updates objects and adds objects to game
     to_add = []
@@ -99,3 +101,32 @@ def update_and_add_game_objects(game_objects,dt):
 
     game_objects.extend(to_add)
 
+
+def restart_game():
+    '''
+    game_objects.clear()
+
+    #Alien Sprites
+    Aliens = aliens_on_screen(3,batch=Resources.main_batch)
+
+    #Barriers
+    Barriers = generate_barriers(4,batch=Resources.main_batch)
+
+    game_objects = [Objects.player_ship] + Aliens + Barriers
+
+    Objects.player_ship.dead = False
+    Objects.player_ship.lives = 3
+    Objects.player_ship.x = 400
+    Objects.player_ship.y = 50
+
+    Objects.end_obj.restart = False
+    Objects.end_obj.close = False
+    '''
+    pass
+
+def next_level():
+    if Objects.game_obj.next_level == True:
+        
+        Objects.game_obj.game_objects.extend(aliens_on_screen(3+Objects.game_obj.level,batch=Resources.main_batch))
+        
+        Objects.game_obj.next_level = False

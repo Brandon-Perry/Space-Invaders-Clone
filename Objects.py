@@ -467,14 +467,16 @@ class EndGame(pyglet.sprite.Sprite):
     def __init__(self, x=0,y=0, *args,**kwargs):
         self.key_handler = key.KeyStateHandler()
         self.dead = False
+        self.restart = False
+        self.close = False
         #self.x = x
         #self.game_window = game_window
 
     def update(self,dt):
         if self.key_handler[key.Y]:
-            print('True')
+            self.restart = True
         elif self.key_handler[key.N]:
-            print('False')
+            self.close = True
 
 class Title(pyglet.sprite.Sprite):
     
@@ -488,6 +490,30 @@ class Title(pyglet.sprite.Sprite):
         if self.key_handler[key.ENTER]:
             self.dead = True
 
+class GamePlay(pyglet.sprite.Sprite):
+
+    def __init__(self, x=0, y=0, *args, **kwargs):
+        self.game_objects = []
+        self.alien_count = 0
+        self.level = 1
+        self.next_level = False
+
+    def update(self,dt):
+        self.alien_count = 0
+        for obj in self.game_objects:
+            if obj.__class__ == Alien:
+                self.alien_count += 1
+        print(self.alien_count)
+
+        if self.alien_count == 0:
+            self.level += 1
+            self.next_level = True
+            
+        
+            
+
+
+
 
 #Player Sprite
 player_ship = Player(x=100,y=100, batch=Resources.main_batch)
@@ -497,3 +523,5 @@ player_ship.y = 50
 end_obj = EndGame(x=400,y=400,batch=Resources.end_batch)
 
 title_obj = Title(x=0,y=0,batch=Resources.title_batch)
+
+game_obj = GamePlay(x=0,y=0,batch=Resources.main_batch)
