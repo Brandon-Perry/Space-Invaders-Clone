@@ -467,20 +467,25 @@ class EndGame(pyglet.sprite.Sprite):
     def __init__(self, x=0,y=0, *args,**kwargs):
         self.key_handler = key.KeyStateHandler()
         self.dead = False
+        self.restart = None
+        
         #self.x = x
         #self.game_window = game_window
 
     def update(self,dt):
         if self.key_handler[key.Y]:
-            print('True')
+            self.restart = True
+            print('Restarted')
         elif self.key_handler[key.N]:
-            print('False')
+            self.restart = False 
+            print('Did not restart')
 
 class Title(pyglet.sprite.Sprite):
     
     def __init__(self, x=0,y=0, *args,**kwargs):
         self.key_handler = key.KeyStateHandler()
         self.dead = False
+        self.restart = False
         #self.x = x
         #self.game_window = game_window
 
