@@ -32,12 +32,16 @@ def update(dt):
         Functions.collision_check(game_objects)
 
         Functions.update_and_add_game_objects(game_objects,dt)
+        
         #Score update
         score_label.text="Score: " + str(Objects.player_ship.points)
-        
-    else:
 
-        Functions.update_titles(dt)
+        if Functions.check_endgame(Objects.player_ship) == True:
+            Objects.end_obj.update(dt)
+        
+    if Objects.title_obj.dead == False:
+
+        Objects.title_obj.update(dt)
 
     
       

@@ -99,7 +99,3 @@ def update_and_add_game_objects(game_objects,dt):
 
     game_objects.extend(to_add)
 
-def update_titles(dt):
-    title_obj = [Objects.title_obj,Objects.end_obj]
-    for obj in title_obj:
-        obj.update(dt)
