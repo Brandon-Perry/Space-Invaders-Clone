@@ -48,10 +48,10 @@ def update(dt):
         if Functions.check_endgame(Objects.player_ship) == True:
             Objects.end_obj.update(dt)
             if Objects.end_obj.close == True:
-                pass
+                window.close()
                 
             if Objects.end_obj.restart == True:
-                pass
+                Functions.restart_game(window,Objects.game_obj.game_objects,Objects.game_obj.level)
         
         
         
@@ -59,9 +59,6 @@ def update(dt):
 
         Objects.title_obj.update(dt)
 
-    
-
-    
     
 
 

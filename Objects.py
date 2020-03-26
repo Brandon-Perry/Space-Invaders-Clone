@@ -503,7 +503,6 @@ class GamePlay(pyglet.sprite.Sprite):
         for obj in self.game_objects:
             if obj.__class__ == Alien:
                 self.alien_count += 1
-        print(self.alien_count)
 
         if self.alien_count == 0:
             self.level += 1

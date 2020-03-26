@@ -8,15 +8,18 @@ def aliens_on_screen(num_aliens,batch=None):
 
     new_aliens = []
 
-    alien_x = 100
     alien_y = 450
 
-    for _i in range(num_aliens):
         
-        alien_x += 100*_i
+    spacing = 800 // (num_aliens + 1)
+    
+    for _i in range(num_aliens):
 
-        alien_enemy = Objects.Alien(x=alien_x,y=alien_y,batch=batch)
-        new_aliens.append(alien_enemy)
+        alien_x = (spacing * (_i + 1))
+
+        alien = Objects.Alien(x=alien_x,y=alien_y,batch=batch)
+
+        new_aliens.append(alien)
 
     return new_aliens
 
@@ -102,27 +105,39 @@ def update_and_add_game_objects(game_objects,dt):
     game_objects.extend(to_add)
 
 
-def restart_game():
-    '''
-    game_objects.clear()
+def restart_game(window,game_objects,level):
+    
+    
+
+    window.clear()
+
+    for obj in game_objects:
+        obj.delete()
+        
+
+
+    #Objects.game_obj.game_objects = []
+
+    print(game_objects)
 
     #Alien Sprites
-    Aliens = aliens_on_screen(3,batch=Resources.main_batch)
+    Objects.game_obj.game_objects.extend(aliens_on_screen(2+level,batch=Resources.main_batch))
 
     #Barriers
-    Barriers = generate_barriers(4,batch=Resources.main_batch)
+    Objects.game_obj.game_objects.extend(generate_barriers(2-level,batch=Resources.main_batch))
 
-    game_objects = [Objects.player_ship] + Aliens + Barriers
+    Objects.game_obj.game_objects.append(Objects.player_ship)
 
     Objects.player_ship.dead = False
     Objects.player_ship.lives = 3
     Objects.player_ship.x = 400
     Objects.player_ship.y = 50
+    Objects.player_ship.points = 0
 
     Objects.end_obj.restart = False
     Objects.end_obj.close = False
-    '''
-    pass
+    
+
 
 def next_level():
     if Objects.game_obj.next_level == True:
