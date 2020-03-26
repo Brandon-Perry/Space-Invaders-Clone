@@ -111,21 +111,21 @@ def restart_game(window,game_objects,level):
 
     window.clear()
 
-    for obj in game_objects:
-        obj.delete()
-        
+    Objects.game_obj.game_objects = []
+    Resources.main_batch = pyglet.graphics.Batch()
+    Resources.effects_batch = pyglet.graphics.Batch()
+    Resources.label_batch = pyglet.graphics.Batch()
+    Resources.end_batch = pyglet.graphics.Batch()
+    Resources.title_batch = pyglet.graphics.Batch()
 
-
-    #Objects.game_obj.game_objects = []
-
-    print(game_objects)
 
     #Alien Sprites
-    Objects.game_obj.game_objects.extend(aliens_on_screen(2+level,batch=Resources.main_batch))
+    Objects.game_obj.game_objects.extend(aliens_on_screen(3,batch=Resources.main_batch))
 
     #Barriers
-    Objects.game_obj.game_objects.extend(generate_barriers(2-level,batch=Resources.main_batch))
+    Objects.game_obj.game_objects.extend(generate_barriers(4,batch=Resources.main_batch))
 
+    Objects.player_ship = Objects.Player(x=400,y=500, batch=Resources.main_batch)
     Objects.game_obj.game_objects.append(Objects.player_ship)
 
     Objects.player_ship.dead = False
@@ -136,7 +136,11 @@ def restart_game(window,game_objects,level):
 
     Objects.end_obj.restart = False
     Objects.end_obj.close = False
+
+    Objects.game_obj.next_level = False
     
+    Objects.score_label = pyglet.text.Label(text="Score: " + str(Objects.player_ship.points),x=25,y=550,batch=Resources.label_batch)
+    Objects.level_label = pyglet.text.Label(text='Level: ' + str(Objects.game_obj.level),x=400,y=550,batch=Resources.label_batch)
 
 
 def next_level():

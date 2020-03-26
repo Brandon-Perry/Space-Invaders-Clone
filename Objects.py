@@ -524,3 +524,7 @@ end_obj = EndGame(x=400,y=400,batch=Resources.end_batch)
 title_obj = Title(x=0,y=0,batch=Resources.title_batch)
 
 game_obj = GamePlay(x=0,y=0,batch=Resources.main_batch)
+
+#Labels
+score_label = pyglet.text.Label(text="Score: " + str(player_ship.points),x=25,y=550,batch=Resources.label_batch)
+level_label = pyglet.text.Label(text='Level: ' + str(game_obj.level),x=400,y=550,batch=Resources.label_batch)

@@ -16,8 +16,8 @@ window = pyglet.window.Window(800,600)
 ###
 
 #Labels
-score_label = pyglet.text.Label(text="Score: " + str(Objects.player_ship.points),x=25,y=550,batch=Resources.label_batch)
-level_label = pyglet.text.Label(text='Level: ' + str(Objects.game_obj.level),x=window.width/2,y=550,batch=Resources.label_batch)
+Objects.score_label
+Objects.level_label
 
 
 #list of game objects on screen
@@ -38,10 +38,10 @@ def update(dt):
         Functions.update_and_add_game_objects(Objects.game_obj.game_objects,dt)
         
         #Score update
-        score_label.text="Score: " + str(Objects.player_ship.points)
+        Objects.score_label.text="Score: " + str(Objects.player_ship.points)
 
         #Level update
-        level_label.text='Level ' + str(Objects.game_obj.level)
+        Objects.level_label.text='Level ' + str(Objects.game_obj.level)
 
         Objects.game_obj.update(dt)
 
@@ -52,6 +52,7 @@ def update(dt):
                 
             if Objects.end_obj.restart == True:
                 Functions.restart_game(window,Objects.game_obj.game_objects,Objects.game_obj.level)
+                
         
         
         
