@@ -2,6 +2,7 @@ import pyglet
 
 import Objects
 import Resources
+import random
 
 
 def aliens_on_screen(num_aliens,batch=None):
@@ -87,7 +88,7 @@ def collision_check(game_objects):
 
 
 def update_and_add_game_objects(game_objects,dt):
-    #Updates objects and adds objects to game
+    #Updates objects and adds objects to game, game decides whether to respawn player here
     to_add = []
 
     for obj in game_objects:
@@ -98,6 +99,7 @@ def update_and_add_game_objects(game_objects,dt):
     for to_remove in [obj for obj in game_objects if obj.dead]:
         if not to_remove == Objects.player_ship:
             to_remove.delete() 
+            
         if to_remove == Objects.player_ship:
             respawn(Objects.player_ship,game_objects)
         game_objects.remove(to_remove)
@@ -111,13 +113,17 @@ def restart_game(window,game_objects,level):
 
     window.clear()
 
+    del Objects.game_obj.game_objects[0:]
     Objects.game_obj.game_objects = []
+    
+    
     Resources.main_batch = pyglet.graphics.Batch()
     Resources.effects_batch = pyglet.graphics.Batch()
     Resources.label_batch = pyglet.graphics.Batch()
     Resources.end_batch = pyglet.graphics.Batch()
     Resources.title_batch = pyglet.graphics.Batch()
 
+    print(game_objects)
 
     #Alien Sprites
     Objects.game_obj.game_objects.extend(aliens_on_screen(3,batch=Resources.main_batch))
@@ -138,9 +144,12 @@ def restart_game(window,game_objects,level):
     Objects.end_obj.close = False
 
     Objects.game_obj.next_level = False
+    Objects.game_obj.level = 1
     
     Objects.score_label = pyglet.text.Label(text="Score: " + str(Objects.player_ship.points),x=25,y=550,batch=Resources.label_batch)
     Objects.level_label = pyglet.text.Label(text='Level: ' + str(Objects.game_obj.level),x=400,y=550,batch=Resources.label_batch)
+
+    print(game_objects)
 
 
 def next_level():
@@ -149,3 +158,15 @@ def next_level():
         Objects.game_obj.game_objects.extend(aliens_on_screen(3+Objects.game_obj.level,batch=Resources.main_batch))
         
         Objects.game_obj.next_level = False
+
+
+def send_mothership(game_objects,batch=None):
+
+    x = random.randint(1,250)
+
+    if x == 5:
+
+        new_mothership = Objects.Mothership(start='Left',x=100,y=400,batch=batch)
+
+        game_objects.append(new_mothership)
+

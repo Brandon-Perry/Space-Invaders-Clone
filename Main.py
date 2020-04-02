@@ -13,6 +13,7 @@ import Screens
 ###
 #Game Window
 window = pyglet.window.Window(800,600)
+window.push_handlers(Objects.global_key_handler)
 ###
 
 #Labels
@@ -29,6 +30,10 @@ Objects.game_obj.game_objects = [Objects.player_ship] + Sprites.Aliens + Sprites
 def update(dt):
     
     if Objects.title_obj.dead == True:
+
+        #Check to send mothership
+        Functions.send_mothership(Objects.game_obj.game_objects,batch=Resources.main_batch)
+
 
         #Checks for next level
         Functions.next_level()
@@ -47,14 +52,12 @@ def update(dt):
 
         if Functions.check_endgame(Objects.player_ship) == True:
             Objects.end_obj.update(dt)
-            if Objects.end_obj.close == True:
+            if Objects.end_obj.close == True: 
                 window.close()
                 
             if Objects.end_obj.restart == True:
                 Functions.restart_game(window,Objects.game_obj.game_objects,Objects.game_obj.level)
                 
-        
-        
         
     if Objects.title_obj.dead == False:
 

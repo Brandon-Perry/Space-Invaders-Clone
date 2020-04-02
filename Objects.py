@@ -7,6 +7,7 @@ import random
 import Resources
 import Object_Functions
 
+global_key_handler = key.KeyStateHandler()
 
 #GENERAL PHYSICAL OBJECTS
 class PhyiscalObject(pyglet.sprite.Sprite):
@@ -49,10 +50,10 @@ class PhyiscalObject(pyglet.sprite.Sprite):
 
     def check_bounds(self):
         #if item reaches the edges of the map, then it stops them from going any further
-        min_x = self.image.width / 2
-        min_y = self.image.height / 2
-        max_x = 800 - self.image.width / 2
-        max_y = 600 - self.image.height / 2
+        min_x = self.width / 2
+        min_y = self.height / 2
+        max_x = 800 - self.width / 2
+        max_y = 600 - self.height / 2
         if self.x <= min_x:
             self.x = min_x
             self.velocity_x = 0
@@ -81,7 +82,7 @@ class PhyiscalObject(pyglet.sprite.Sprite):
             return False
 
         #Calculates collision distance 
-        collision_distance = self.image.width/2 + other_object.image.width/2
+        collision_distance = self.width/2 + other_object.width/2
         actual_distance = Object_Functions.distance(self.position,other_object.position)
         return (actual_distance <= collision_distance)
 
@@ -95,9 +96,14 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         elif self.destructable == False:
             self.dead = False
 
+        #Don't collide with effects
+        elif self.__class__ == Effects or other_object.__class__ == Effects:
+            self.dead = False
+            other_object.dead = False
+
         #If object is Alien, then:
         elif self.__class__ == Alien: 
-            self.alien_collision()
+            self.alien_collision(other_object)
 
         #If object is barrier, don't damage Player
         elif self.__class__ == Barrier:
@@ -105,17 +111,39 @@ class PhyiscalObject(pyglet.sprite.Sprite):
                 self.ship_barrier_collision(other_object)
             else:
                 self.barrier_collision()
+        
+        #Prevents collision between mothership and aliens
+        elif self.__class__ == Mothership and other_object.__class__ == Alien:
+            self.dead = False
+        elif self.__class__ == Alien and other_object.__class__ == Mothership:
+            self.dead = False
 
+        #Special collision for player_bullets and mothership. Bullet destroys self
+        elif self.__class__ == Mothership and other_object.__class__ == Player_Bullet:
+            self.mothership_shot()
+        
+
+        #Special collision for powerup and barrier (stops movement)
+        elif self.__class__ == Powerup and other_object.__class__ == Barrier:
+            self.velocity_y = 0
+            self.y = other_object.y + other_object.width/2
+            
+        
+
+        #Handles special collisions for player
         elif self.__class__ == Player:
             if other_object.__class__ == Barrier:
                 pass
+            if other_object.__class__ == Powerup:
+                self.dead = False
+                self.determine_powerup(other_object)
             else:
                 self.player_dies()
 
 
         else:
             self.dead = True
-
+        
     def explosion(self,obj_x = 0.0,obj_y = 0.0):
         explosion_sprite = pyglet.sprite.Sprite(img=Resources.explosion,batch=Resources.effects_batch,x=obj_x,y=obj_y)
         explosion_sprite.scale = .75
@@ -130,6 +158,7 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         
         
 class Player(PhyiscalObject):
+
     def __init__(self,x=400.0,y=100.0,*args,**kwargs):
         super().__init__(img=Resources.player_image,*args,**kwargs)
 
@@ -141,12 +170,14 @@ class Player(PhyiscalObject):
         self.drag = .5
         
         #Ship handling
-        self.key_handler = key.KeyStateHandler()
+        self.key_handler = global_key_handler
 
         #Bullet 
         self.bullet_speed = 1000.0
         self.fireonce = True
         self.reacts_to_bullets = False
+        self.reacts_to_alien_bullets = False
+        self.killshot_on = False
 
         #Player's attributes
         self.points = 0
@@ -207,17 +238,17 @@ class Player(PhyiscalObject):
     def fire(self):
         #Fire so the bullet goes the direction the ship is facing and take into account ship velocities
         angle_radians = -math.radians(self.rotation + 270)
-        ship_radius = self.image.width/2
+        ship_radius = self.width/2
         bullet_x = self.x + math.cos(angle_radians) * ship_radius
         bullet_y = self.y + math.sin(angle_radians) * ship_radius
-        new_bullet = Player_Bullet(x=bullet_x,y=bullet_y,batch=self.batch)
+        new_bullet = Player_Bullet(x=bullet_x,y=bullet_y,batch=self.batch,killshot=self.killshot_on)
 
         bullet_vx = (self.velocity_x + math.cos(angle_radians) * self.bullet_speed)
         bullet_vy = (self.velocity_y + math.sin(angle_radians) * self.bullet_speed)
         new_bullet.velocity_x = bullet_vx
         new_bullet.velocity_y = bullet_vy
 
-        new_bullet.rotation = self.rotation
+        new_bullet.rotation = self.rotation           
 
         self.new_objects.append(new_bullet)
 
@@ -236,10 +267,53 @@ class Player(PhyiscalObject):
         print(self.lives)
         self.explosion(obj_x=self.x,obj_y=self.y)
 
+    def determine_powerup(self,other_object):
+
+        if other_object.feature == 'life':
+            self.new_life()
+            print('got an extra life!')
+
+        if other_object.feature == 'killshot':
+            self.killshot()
+            print('Got killshot!')
+
+        if other_object.feature == 'shields':
+            self.shields()
+            print('Got shields!')
+
+    def new_life(self):
+        self.lives += 1
+
+    def killshot(self):
+        #Killshot If statement in the fire function
+        self.killshot_on = True
+
+        pyglet.clock.schedule_once(self.killshot_off,5)
+
+    def killshot_off(self,dt):
+        self.killshot_on = False
+
+    def shields(self):
         
+        Resources.space_ship_shields.anchor_x = self.width // 2
+        Resources.space_ship_shields.anchor_y = self.height // 2
+
+        self.destructable = False
+        self.image = Resources.space_ship_shields
+
+        pyglet.clock.schedule_once(self.turn_off_shields,7)
+
+    def turn_off_shields(self,dt):
+            self.destructable = True
+            self.image = Resources.player_image
+
+
 class Player_Bullet(PhyiscalObject):
-    def __init__(self,*args,**kwargs):
-        super(Player_Bullet,self).__init__(img=Resources.bullet_image,*args,**kwargs)
+    def __init__(self,killshot=None,*args,**kwargs):
+        
+        self.killshot = killshot
+        
+        super(Player_Bullet,self).__init__(img=self.determine_image(),*args,**kwargs)
         pyglet.clock.schedule_interval(self.check_bounds_bullet,.05)
 
         self.is_bullet = True
@@ -260,6 +334,57 @@ class Player_Bullet(PhyiscalObject):
             self.die()
         elif self.y >= max_y:
             self.die()
+
+    def determine_image(self):
+        if self.killshot == False:
+            return Resources.bullet_image
+
+        elif self.killshot == True:
+            return Resources.killshot
+
+    def killshot_effects(self):
+        
+        if self.killshot == True:
+
+            new_effect = Effects(effects_code='killshot',x=self.x,y=self.y,\
+            batch=Resources.effects_batch)
+
+            self.new_objects.append(new_effect)
+
+    def update(self,dt):
+        super(Player_Bullet,self).update(dt)
+
+        self.killshot_effects()
+
+                           
+class Effects(PhyiscalObject):
+
+    def __init__(self,effects_code = None, *args,**kwargs):
+
+        self.effects_code = effects_code
+        self.duration = self.effect_length()
+
+        super(Effects,self).__init__(img=self.determine_effects(),*args,**kwargs)
+
+        pyglet.clock.schedule_once(self.die,self.duration)
+
+        self.destructable = False
+        self.reacts_to_alien_bullets = False
+        self.reacts_to_bullets = False
+
+    def determine_effects(self):
+        
+        if self.effects_code == 'killshot':
+            return Resources.killshot_effects
+        else: 
+            return None
+
+    def effect_length(self):
+        if self.effects_code == 'killshot':
+            return pyglet.image.Animation.get_duration(Resources.killshot_effects)
+
+    def die(self,dt):
+        self.dead = True
 
 
 class Alien_Bullet(PhyiscalObject):
@@ -353,9 +478,13 @@ class Alien(PhyiscalObject):
         else:
             pass
     
-    def alien_collision(self):  
+    def alien_collision(self,other_object):  
         self.health -= 1
         player_ship.hit_alien()
+
+        #Instakill with killshot
+        if other_object.__class__ == Player_Bullet and other_object.killshot == True:
+            self.health = 0
 
         #Alien ship falls
         if self.health == 1:
@@ -465,7 +594,7 @@ class Barrier(PhyiscalObject):
 class EndGame(pyglet.sprite.Sprite):
     
     def __init__(self, x=0,y=0, *args,**kwargs):
-        self.key_handler = key.KeyStateHandler()
+        self.key_handler = global_key_handler
         self.dead = False
         self.restart = False
         self.close = False
@@ -478,10 +607,11 @@ class EndGame(pyglet.sprite.Sprite):
         elif self.key_handler[key.N]:
             self.close = True
 
+
 class Title(pyglet.sprite.Sprite):
     
     def __init__(self, x=0,y=0, *args,**kwargs):
-        self.key_handler = key.KeyStateHandler()
+        self.key_handler = global_key_handler
         self.dead = False
         #self.x = x
         #self.game_window = game_window
@@ -490,6 +620,7 @@ class Title(pyglet.sprite.Sprite):
         if self.key_handler[key.ENTER]:
             self.dead = True
 
+
 class GamePlay(pyglet.sprite.Sprite):
 
     def __init__(self, x=0, y=0, *args, **kwargs):
@@ -497,6 +628,7 @@ class GamePlay(pyglet.sprite.Sprite):
         self.alien_count = 0
         self.level = 1
         self.next_level = False
+        
 
     def update(self,dt):
         self.alien_count = 0
@@ -509,8 +641,72 @@ class GamePlay(pyglet.sprite.Sprite):
             self.next_level = True
             
         
-            
+class Mothership(PhyiscalObject):
+    
+    def __init__(self,start=None,x=0,y=0,*args,**kwargs):
+        super(Mothership,self).__init__(img=Resources.mothership,*args,**kwargs)
 
+        self.powerup = random.randint(1,3)
+        self.health = 1
+        self.reacts_to_alien_bullets = False
+        self.reacts_to_bullets = True
+        self.start = start
+        self.velocity_x = 100
+        self.x = x
+        self.y = y
+
+    def spawn_powerup(self):
+
+        if self.powerup == 1:
+            new_powerup = Powerup(x=self.x,y=self.y,feature='life',batch=Resources.main_batch)
+            self.new_objects.append(new_powerup)
+
+        elif self.powerup == 2:
+            new_powerup = Powerup(x=self.x,y=self.y,feature='killshot',batch=Resources.main_batch)
+            self.new_objects.append(new_powerup)
+
+        elif self.powerup == 3:
+            new_powerup = Powerup(x=self.x,y=self.y,feature='shields',batch=Resources.main_batch)
+            self.new_objects.append(new_powerup)
+
+    def update(self,dt):
+
+        #Depending on which side of the screen mothership starts, mothership moves left or right. If reaches edge, dead.
+        if self.start == 'Left':
+            self.x += self.velocity_x * dt
+            #if self.x == 800:
+                #self.dead = True
+
+        elif self.start == 'Right':
+            self.x -= self.velocity_x * dt
+            #if self.x == 0:
+                #self.dead = True
+
+    def mothership_shot(self):
+        self.spawn_powerup()
+        self.dead = True
+        
+        
+class Powerup(PhyiscalObject):
+    
+    def __init__(self,x=0,y=0,feature=None,*args,**kwargs):
+        super(Powerup,self).__init__(img=Resources.powerup,*args,**kwargs)
+
+        self.feature = feature
+        self.health = 1
+        self.reacts_to_bullets = False
+        self.reacts_to_alien_bullets = False
+        self.x = x
+        self.y = y
+        self.upgrade = None
+
+    def update(self,dt):
+        self.y -= self.gravity
+        
+        #Prevents from falling through floor
+        if self.y <= 5:
+            self.y = 5
+ 
 
 
 

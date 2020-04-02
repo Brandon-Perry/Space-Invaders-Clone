@@ -13,6 +13,12 @@ alien_bullet = pyglet.resource.image('alien_lazer.png')
 explosion = pyglet.resource.animation('explosion.gif')
 barrier = pyglet.resource.image('barrier.png')
 barrier_damage = pyglet.resource.image('barrier_damage.png')
+mothership = pyglet.resource.animation('mothership.gif')
+space_ship_shields = pyglet.resource.animation('space_ship_shields.gif')
+powerup = pyglet.resource.animation('powerup.gif')
+killshot = pyglet.resource.animation('killshot.gif')
+killshot_effects = pyglet.resource.animation('killshot_effects.gif')
+
 
 
 #Edits images
@@ -22,6 +28,11 @@ def center_image(image):
     image.anchor_x = image.width // 2
     image.anchor_y = image.height // 2
 
+def animation_center(anim):
+    for f in anim.frames:
+        f.image.anchor_x = f.image.width // 2
+        f.image.anchor_y = f.image.height // 2
+
 center_image(player_image)
 center_image(bullet_image)
 center_image(alien_image)
@@ -30,8 +41,15 @@ center_image(alien_bullet)
 center_image(barrier)
 center_image(barrier_damage)
 
-barrier.scale = 3
+animation_center(explosion)
+animation_center(space_ship_shields)
+animation_center(powerup)
+animation_center(killshot)
+animation_center(killshot_effects)
 
+
+barrier.scale = 3
+mothership.scale = .1
 
 #Batches
 main_batch = pyglet.graphics.Batch()

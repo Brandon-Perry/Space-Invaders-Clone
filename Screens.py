@@ -7,7 +7,6 @@ def game_screen(window):
     Resources.main_batch.draw()
     Resources.effects_batch.draw()  
     Resources.label_batch.draw()
-    window.push_handlers(Objects.player_ship.key_handler)
 
 def end_screen(window,game_objects):
     window.clear()
@@ -18,7 +17,6 @@ def end_screen(window,game_objects):
     start_again_text.draw()
 
     Resources.end_batch.draw()
-    window.push_handlers(Objects.end_obj.key_handler)
 
 def title_screen(window,game_objects):
     window.clear()
@@ -29,4 +27,3 @@ def title_screen(window,game_objects):
     title_again_text.draw()
 
     Resources.title_batch.draw()
-    window.push_handlers(Objects.title_obj.key_handler)
