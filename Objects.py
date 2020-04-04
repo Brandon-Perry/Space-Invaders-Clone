@@ -92,9 +92,13 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         if other_object.__class__ == self.__class__:
             self.dead = False
         
-        #If object is indestructable, don't collide
+        #If object is indestructable, don't collide. Powerups and ship with shields should collide
         elif self.destructable == False:
-            self.dead = False
+            if (self.__class__ == Player and other_object.__class__ == Powerup)\
+                or (self.__class__ == Powerup and other_object.__class__ == Player):
+                pass
+            else:
+                self.dead = False
 
         #Don't collide with effects
         elif self.__class__ == Effects or other_object.__class__ == Effects:
@@ -105,18 +109,17 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         elif self.__class__ == Alien: 
             self.alien_collision(other_object)
 
+        #Aliens and motherships shouldn't collide
+        elif self.__class__ == Mothership and other_object.__class__ == Alien:
+            self.dead = False
+            other_object.dead = False
+
         #If object is barrier, don't damage Player
         elif self.__class__ == Barrier:
             if other_object.__class__ == Player:
                 self.ship_barrier_collision(other_object)
             else:
                 self.barrier_collision()
-        
-        #Prevents collision between mothership and aliens
-        elif self.__class__ == Mothership and other_object.__class__ == Alien:
-            self.dead = False
-        elif self.__class__ == Alien and other_object.__class__ == Mothership:
-            self.dead = False
 
         #Special collision for player_bullets and mothership. Bullet destroys self
         elif self.__class__ == Mothership and other_object.__class__ == Player_Bullet:
@@ -126,9 +129,7 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         #Special collision for powerup and barrier (stops movement)
         elif self.__class__ == Powerup and other_object.__class__ == Barrier:
             self.velocity_y = 0
-            self.y = other_object.y + other_object.width/2
-            
-        
+            self.y = other_object.y + other_object.width/2       
 
         #Handles special collisions for player
         elif self.__class__ == Player:
@@ -139,6 +140,13 @@ class PhyiscalObject(pyglet.sprite.Sprite):
                 self.determine_powerup(other_object)
             else:
                 self.player_dies()
+
+        #Prevents other objects from destroying powerups
+        elif (self.__class__ == Powerup and other_object.__class__ != Player)\
+            or (self.__class__ != Player and other_object.__class__ == Powerup):
+            self.dead = False
+            other_object.dead = False
+
 
 
         else:
@@ -176,7 +184,7 @@ class Player(PhyiscalObject):
         self.bullet_speed = 1000.0
         self.fireonce = True
         self.reacts_to_bullets = False
-        self.reacts_to_alien_bullets = False
+        self.reacts_to_alien_bullets = True
         self.killshot_on = False
 
         #Player's attributes
@@ -288,6 +296,11 @@ class Player(PhyiscalObject):
         #Killshot If statement in the fire function
         self.killshot_on = True
 
+        new_effect = Effects(effects_code='killshot_text',x=self.x,y=self.y,\
+            batch=Resources.effects_batch)
+
+        self.new_objects.append(new_effect)
+
         pyglet.clock.schedule_once(self.killshot_off,5)
 
     def killshot_off(self,dt):
@@ -295,9 +308,7 @@ class Player(PhyiscalObject):
 
     def shields(self):
         
-        Resources.space_ship_shields.anchor_x = self.width // 2
-        Resources.space_ship_shields.anchor_y = self.height // 2
-
+ 
         self.destructable = False
         self.image = Resources.space_ship_shields
 
@@ -309,9 +320,9 @@ class Player(PhyiscalObject):
 
 
 class Player_Bullet(PhyiscalObject):
-    def __init__(self,killshot=None,*args,**kwargs):
+    def __init__(self,killshot=False,*args,**kwargs):
         
-        self.killshot = killshot
+        self.killshot = False
         
         super(Player_Bullet,self).__init__(img=self.determine_image(),*args,**kwargs)
         pyglet.clock.schedule_interval(self.check_bounds_bullet,.05)
@@ -344,10 +355,13 @@ class Player_Bullet(PhyiscalObject):
 
     def killshot_effects(self):
         
+        def killshot_spread():
+            return random.randint(-5,5)
+        
         if self.killshot == True:
 
-            new_effect = Effects(effects_code='killshot',x=self.x,y=self.y,\
-            batch=Resources.effects_batch)
+            new_effect = Effects(effects_code='killshot',x=self.x + killshot_spread(),\
+                y=self.y + killshot_spread(),batch=Resources.effects_batch)
 
             self.new_objects.append(new_effect)
 
@@ -376,16 +390,25 @@ class Effects(PhyiscalObject):
         
         if self.effects_code == 'killshot':
             return Resources.killshot_effects
-        else: 
-            return None
+        
+        elif self.effects_code == 'killshot_text':
+            return Resources.killshot_text
 
     def effect_length(self):
         if self.effects_code == 'killshot':
             return pyglet.image.Animation.get_duration(Resources.killshot_effects)
+        elif self.effects_code == 'killshot_text':
+            return pyglet.image.Animation.get_duration(Resources.killshot_text)
 
     def die(self,dt):
         self.dead = True
 
+    def update(self,dt):
+        super(Effects,self).update(dt)
+
+        if self.effects_code == 'killshot_text':
+            self.velocity_y = 100
+        
 
 class Alien_Bullet(PhyiscalObject):
     def __init__(self,*args,**kwargs):
@@ -479,27 +502,34 @@ class Alien(PhyiscalObject):
             pass
     
     def alien_collision(self,other_object):  
-        self.health -= 1
-        player_ship.hit_alien()
-
-        #Instakill with killshot
-        if other_object.__class__ == Player_Bullet and other_object.killshot == True:
-            self.health = 0
-
-        #Alien ship falls
-        if self.health == 1:
-            self.fall()
         
-        #Alien ship dies
-        elif self.health == 0:
-            self.explosion(self.x,self.y)
-            player_ship.kill_alien()
-            
+        #Prevents collision between mothership and aliens
+        if other_object.__class__ == Mothership:
+            self.dead = False
+            other_object.dead = False
+        else:
+        
+            self.health -= 1
+            player_ship.hit_alien()
 
-        else: #If Alien isn't dead or falling, then make them indestructable for a second and replace with alien damage picture
-            self.destructable = False
-            self.image = Resources.alien_damage_image
-            pyglet.clock.schedule_once(self.damage_picture,1)
+            #Instakill with killshot
+            if other_object.__class__ == Player_Bullet and other_object.killshot == True:
+                self.health = 0
+
+            #Alien ship falls
+            if self.health == 1:
+                self.fall()
+            
+            #Alien ship dies
+            elif self.health == 0:
+                self.explosion(self.x,self.y)
+                player_ship.kill_alien()
+                
+
+            else: #If Alien isn't dead or falling, then make them indestructable for a second and replace with alien damage picture
+                self.destructable = False
+                self.image = Resources.alien_damage_image
+                pyglet.clock.schedule_once(self.damage_picture,1)
 
     def damage_picture(self,dt):
         
@@ -524,7 +554,7 @@ class Alien(PhyiscalObject):
             variance_in_shot = random.randint(-30,30)
 
             angle_radians = -math.radians(self.rotation - angle_to_player + variance_in_shot)
-            ship_radius = self.image.width/2
+            ship_radius = self.width/2
             bullet_x = self.x + math.cos(angle_radians) * ship_radius
             bullet_y = self.y + math.sin(angle_radians) * ship_radius
             new_bullet = Alien_Bullet(x=bullet_x,y=bullet_y,batch=self.batch)

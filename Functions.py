@@ -20,6 +20,9 @@ def aliens_on_screen(num_aliens,batch=None):
 
         alien = Objects.Alien(x=alien_x,y=alien_y,batch=batch)
 
+        #Changes the size
+        alien.scale = 1.4
+
         new_aliens.append(alien)
 
     return new_aliens
@@ -167,6 +170,8 @@ def send_mothership(game_objects,batch=None):
     if x == 5:
 
         new_mothership = Objects.Mothership(start='Left',x=100,y=400,batch=batch)
+
+        new_mothership.scale = 1.3
 
         game_objects.append(new_mothership)
 
