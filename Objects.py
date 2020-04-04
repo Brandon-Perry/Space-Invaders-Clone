@@ -320,9 +320,9 @@ class Player(PhyiscalObject):
 
 
 class Player_Bullet(PhyiscalObject):
-    def __init__(self,killshot=False,*args,**kwargs):
+    def __init__(self,killshot=None,*args,**kwargs):
         
-        self.killshot = False
+        self.killshot = killshot
         
         super(Player_Bullet,self).__init__(img=self.determine_image(),*args,**kwargs)
         pyglet.clock.schedule_interval(self.check_bounds_bullet,.05)
