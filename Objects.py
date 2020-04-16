@@ -210,7 +210,7 @@ class Player(PhyiscalObject):
 
         #Player's attributes
         self.points = 0
-        self.lives = 1
+        self.lives = 3
 
     def update(self,dt):
 
@@ -1143,7 +1143,13 @@ class Boss_Beam(PhyiscalObject):
 
     
 
+class Background(pyglet.sprite.Sprite):
 
+    def __init__(self, x=0, y=0, *args,**kwargs):
+        super().__init__(img=Resources.background, *args, **kwargs)
+
+        self.x = x
+        self.y = y
 
 
 

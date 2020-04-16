@@ -24,7 +24,7 @@ putin = pyglet.resource.animation('putin.gif')
 putin_damage = pyglet.resource.animation('putin_damage.gif')
 boss_lazer = pyglet.resource.image('boss_lazer.png')
 boss_beam = pyglet.resource.image('beam.png')
-
+background = pyglet.resource.animation('background.gif')
 
 
 
@@ -58,6 +58,7 @@ animation_center(alien_image)
 animation_center(alien_damage_image)
 animation_center(putin)
 animation_center(putin_damage)
+animation_center(background)
 
 
 boss_beam.anchor_x = boss_beam.width // 2
@@ -71,3 +72,4 @@ effects_batch = pyglet.graphics.Batch()
 label_batch = pyglet.graphics.Batch()
 end_batch = pyglet.graphics.Batch()
 title_batch = pyglet.graphics.Batch()
+background_batch = pyglet.graphics.Batch()

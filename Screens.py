@@ -4,6 +4,7 @@ import Objects
 
 def game_screen(window):
     window.clear()
+    Resources.background_batch.draw()
     Resources.main_batch.draw()
     Resources.effects_batch.draw()  
     Resources.label_batch.draw()
