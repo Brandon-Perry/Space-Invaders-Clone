@@ -156,11 +156,14 @@ def restart_game(window,game_objects,level):
 
 
 def next_level():
-    if Objects.game_obj.next_level == True:
+    if Objects.game_obj.next_level == True and Objects.game_obj.boss_battle == False:
         
-        Objects.game_obj.game_objects.extend(aliens_on_screen(3+Objects.game_obj.level,batch=Resources.main_batch))
+        Objects.game_obj.game_objects.extend(aliens_on_screen(2+Objects.game_obj.level,batch=Resources.main_batch))
         
         Objects.game_obj.next_level = False
+
+
+
 
 
 def send_mothership(game_objects,batch=None):

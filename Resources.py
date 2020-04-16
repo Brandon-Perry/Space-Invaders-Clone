@@ -19,6 +19,12 @@ powerup = pyglet.resource.animation('powerup.gif')
 killshot = pyglet.resource.animation('killshot.gif')
 killshot_effects = pyglet.resource.animation('killshot_effects.gif')
 killshot_text = pyglet.resource.animation('killshot_text.gif')
+life_text = pyglet.resource.animation('life_effect.gif')
+putin = pyglet.resource.animation('putin.gif')
+putin_damage = pyglet.resource.animation('putin_damage.gif')
+boss_lazer = pyglet.resource.image('boss_lazer.png')
+boss_beam = pyglet.resource.image('beam.png')
+
 
 
 
@@ -34,9 +40,6 @@ def animation_center(anim):
         f.image.anchor_x = f.image.width // 2
         f.image.anchor_y = f.image.height // 2
 
-def scale_animation(anim,scale_factor):
-    for f in anim.frames:
-        f.image.scale = scale_factor
 
 center_image(player_image)
 center_image(bullet_image)
@@ -50,11 +53,16 @@ animation_center(space_ship_shields)
 animation_center(powerup)
 animation_center(killshot)
 animation_center(killshot_effects)
+animation_center(life_text)
 animation_center(alien_image)
 animation_center(alien_damage_image)
+animation_center(putin)
+animation_center(putin_damage)
 
 
-scale_animation(alien_image,2)
+boss_beam.anchor_x = boss_beam.width // 2
+boss_beam.anchor_y = boss_beam.height // 2
+
 
 
 #Batches

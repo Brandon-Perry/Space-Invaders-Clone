@@ -22,7 +22,7 @@ Objects.level_label
 
 
 #list of game objects on screen
-Objects.game_obj.game_objects = [Objects.player_ship] + Sprites.Aliens + Sprites.Barriers 
+Objects.game_obj.game_objects = [Objects.player_ship] #+ Sprites.Aliens + Sprites.Barriers 
 
 
 
@@ -31,6 +31,9 @@ def update(dt):
     
     if Objects.title_obj.dead == True:
 
+        Objects.game_obj.update(dt)
+
+               
         #Check to send mothership
         Functions.send_mothership(Objects.game_obj.game_objects,batch=Resources.main_batch)
 
@@ -46,9 +49,11 @@ def update(dt):
         Objects.score_label.text="Score: " + str(Objects.player_ship.points)
 
         #Level update
-        Objects.level_label.text='Level ' + str(Objects.game_obj.level)
+        if Objects.game_obj.boss_battle == True:
+            Objects.level_label.text='Level Boss Battle'
+        else:
+            Objects.level_label.text='Level ' + str(Objects.game_obj.level)
 
-        Objects.game_obj.update(dt)
 
         if Functions.check_endgame(Objects.player_ship) == True:
             Objects.end_obj.update(dt)

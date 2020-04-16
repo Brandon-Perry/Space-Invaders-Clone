@@ -81,12 +81,21 @@ class PhyiscalObject(pyglet.sprite.Sprite):
         if self.is_alien_bullet and not other_object.reacts_to_alien_bullets:
             return False
 
+        if self.__class__ == Boss_Bullet and other_object.__class__ == Boss:
+            return False
+        if self.__class__ == Boss and other_object.__class__ == Boss_Bullet:
+            return False
+
         #Calculates collision distance 
         collision_distance = self.width/2 + other_object.width/2
         actual_distance = Object_Functions.distance(self.position,other_object.position)
         return (actual_distance <= collision_distance)
 
     def handle_collision_with(self,other_object):  #need to make it so player ship and aliens can't pass through barrier
+        
+        ###
+        ###This top part should have collisions that are universal across all objects, like sprites
+        ###
         
         #If object is the same type, don't collide
         if other_object.__class__ == self.__class__:
@@ -105,10 +114,22 @@ class PhyiscalObject(pyglet.sprite.Sprite):
             self.dead = False
             other_object.dead = False
 
+        ###
+        ###This part should have collisions for damage
+        ###
+
         #If object is Alien, then:
         elif self.__class__ == Alien: 
             self.alien_collision(other_object)
 
+        elif self.__class__ == Boss:
+            self.boss_collision(other_object)
+
+        ###
+        ###Specicial collisions instances
+        ###
+        
+        
         #Aliens and motherships shouldn't collide
         elif self.__class__ == Mothership and other_object.__class__ == Alien:
             self.dead = False
@@ -292,6 +313,13 @@ class Player(PhyiscalObject):
     def new_life(self):
         self.lives += 1
 
+        new_effect = Effects(effects_code='life',x=self.x,y=self.y,\
+            batch=Resources.effects_batch)
+
+        new_effect.scale = 2
+
+        self.new_objects.append(new_effect)
+
     def killshot(self):
         #Killshot If statement in the fire function
         self.killshot_on = True
@@ -394,11 +422,23 @@ class Effects(PhyiscalObject):
         elif self.effects_code == 'killshot_text':
             return Resources.killshot_text
 
+        elif self.effects_code == 'life':
+            return Resources.life_text
+
+        elif self.effects_code == 'boss_explosion':
+            return Resources.explosion
+
     def effect_length(self):
         if self.effects_code == 'killshot':
             return pyglet.image.Animation.get_duration(Resources.killshot_effects)
         elif self.effects_code == 'killshot_text':
             return pyglet.image.Animation.get_duration(Resources.killshot_text)
+        
+        elif self.effects_code == 'life':
+            return pyglet.image.Animation.get_duration(Resources.life_text) * 2
+
+        elif self.effects_code == 'boss_explosion':
+            return pyglet.image.Animation.get_duration(Resources.explosion)
 
     def die(self,dt):
         self.dead = True
@@ -407,6 +447,9 @@ class Effects(PhyiscalObject):
         super(Effects,self).update(dt)
 
         if self.effects_code == 'killshot_text':
+            self.velocity_y = 100
+
+        elif self.effects_code == 'life':
             self.velocity_y = 100
         
 
@@ -439,7 +482,7 @@ class Alien(PhyiscalObject):
     
     def __init__(self,*args,**kwargs):
         
-        super(Alien,self).__init__(img=Resources.alien_image, *args,**kwargs)
+        super().__init__(img=Resources.alien_image, *args,**kwargs)
 
 
         #If True, Alien is already taking a path in movement
@@ -523,6 +566,7 @@ class Alien(PhyiscalObject):
             #Alien ship dies
             elif self.health == 0:
                 self.explosion(self.x,self.y)
+                pyglet.clock.unschedule(self.damage_picture)
                 player_ship.kill_alien()
                 
 
@@ -545,6 +589,9 @@ class Alien(PhyiscalObject):
         #self.velocity_y -= self.gravity
 
         self.rotation = -45
+
+        #Unschedule changing the damage picture
+        pyglet.clock.unschedule(self.damage_picture)
 
     def fire(self,dt): ####Needs to be fixed with player ship
         
@@ -655,22 +702,52 @@ class GamePlay(pyglet.sprite.Sprite):
 
     def __init__(self, x=0, y=0, *args, **kwargs):
         self.game_objects = []
-        self.alien_count = 0
+        self.enemy_count = 0
         self.level = 1
         self.next_level = False
+        self.boss_level_num = 1
+        self.boss_battle = False
+        self.end_game = False
         
 
     def update(self,dt):
-        self.alien_count = 0
-        for obj in self.game_objects:
-            if obj.__class__ == Alien:
-                self.alien_count += 1
-
-        if self.alien_count == 0:
-            self.level += 1
-            self.next_level = True
-            
         
+        #If this is a boss battle, then killing the boss should end the game
+        if self.level is self.boss_level_num:
+
+            self.load_boss()
+
+            for obj in self.game_objects:
+                if obj.__class__ == Boss:
+                    self.end_game = True
+                    break
+
+        #Otherwise, count aliens and if aliens are killed, go to next level
+        else:
+        
+            self.enemy_count = 0
+            for obj in self.game_objects:
+                if obj.__class__ == Alien:
+                    self.enemy_count += 1
+
+            if self.enemy_count == 0:
+                self.level += 1
+                self.next_level = True
+
+    def load_boss(self):
+
+        if self.boss_battle == False:
+            
+            self.boss_battle = True
+
+            putin_boss = Boss(x=400,y=400,batch=Resources.main_batch)
+
+            putin_boss.scale = .75
+
+            self.game_objects.append(putin_boss)
+
+        
+     
 class Mothership(PhyiscalObject):
     
     def __init__(self,start=None,x=0,y=0,*args,**kwargs):
@@ -737,6 +814,338 @@ class Powerup(PhyiscalObject):
         if self.y <= 5:
             self.y = 5
  
+
+
+class Boss(PhyiscalObject):
+
+    def __init__(self,*args,**kwargs):
+
+        super().__init__(img=Resources.putin,*args,**kwargs)
+
+        #Handles life and damage
+        self.health = 10
+        self.isdying = False
+        self.reacts_to_alien_bullets = False
+        self.reacts_to_bullets = True
+        self.explosion_count = 0
+
+        #Handles movement
+        self.movement = False
+        self.navigating = False
+        self.nav_x = None
+        self.nav_y = None
+
+        #Handles attacks
+        #Attack status is True when it is in the middle of attacking or in the cool off
+        self.attack_status = False
+        self.lazer_status = False
+        self.beam_status = False
+        self.beam_loc = None
+        self.lazer_count = 0
+        self.bullet_speed = 300
+
+
+    def update(self,dt):
+
+        super(Boss,self).update(dt)
+
+        #Handles attacks
+        if self.attack_status == False and self.isdying == False:
+
+            self.choose_attack()
+
+        if self.beam_status == True and self.navigating == False:
+
+                self.fire_beam()
+
+        #Handles movement      
+        if self.movement == False and self.navigating == False:
+            time = random.uniform(0.01,1.5)
+            self.choose_direction()
+            self.change_movement_status(dt)
+            pyglet.clock.schedule_once(self.change_movement_status,time)
+
+        elif self.navigating == True:
+            self.navigation_check()
+
+
+    def choose_attack(self):
+
+        attack_type = random.randint(1,2)
+
+        if attack_type == 1:
+
+            pyglet.clock.schedule_interval(self.lazer_attack,.1)
+            self.attack_status = True
+
+        elif attack_type == 2:
+
+            self.beam_attack()
+            self.attack_status = True
+            
+
+    def choose_direction(self):
+        
+        if self.isdying == False:
+
+            new_x_velocity = random.randint(-100,100)
+            new_y_velocity = random.randint(-75,75)
+
+            if self.x <= 75:
+                new_x_velocity += 200
+            elif self.x >= 750:
+                new_x_velocity -= 200
+            if self.y >= 650:
+                new_y_velocity -= 100
+            if self.y <= 200:
+                new_y_velocity += 150
+
+            self.velocity_x = new_x_velocity
+            self.velocity_y = new_y_velocity
+
+            self.movement = False
+        
+        else:
+            self.velocity_x = 0
+            self.velocity_y = 0
+
+
+    def change_movement_status(self,dt):
+        if self.movement is True:
+            self.movement = False
+        elif self.movement is False:
+            self.movement = True
+
+
+    def lazer_attack(self,dt):
+        
+        #Fire so the bullet goes the direction the ship is facing and take into account ship velocities
+        angle_to_player = math.degrees(Object_Functions.angle(self.position,player_ship.position))
+        variance_in_shot = random.randint(0,0)
+
+        angle_radians = -math.radians(self.rotation - angle_to_player + variance_in_shot)
+        self_radius = self.width/2
+        bullet_x = self.x + math.cos(angle_radians) * self_radius
+        bullet_y = self.y + math.sin(angle_radians) * self_radius
+        new_bullet = Boss_Bullet(x=bullet_x,y=bullet_y,batch=self.batch)
+
+        bullet_vx = (self.velocity_x + math.cos(angle_radians) * self.bullet_speed)
+        bullet_vy = (self.velocity_y + math.sin(angle_radians) * self.bullet_speed)
+        new_bullet.velocity_x = bullet_vx
+        new_bullet.velocity_y = bullet_vy
+
+        new_bullet.scale = 3
+
+        #Sets rotation of the bullet
+        
+        #bullet_angle = math.degrees(math.cos(self.velocity_y/Object_Functions.distance(new_bullet.position,player_ship.position)))
+        #new_bullet.rotation = bullet_angle
+
+        self.new_objects.append(new_bullet)
+
+        #Adds count to lazer_count to ensure burst of certain number
+        self.lazer_count += 1
+
+        #Ensure only a certain number of lazers fire at once, then resets firestatus and lazerstatus after some period
+        if self.lazer_count >= 10:
+            self.reset_attack_status(func=self.lazer_attack)
+            self.lazer_count = 0
+
+
+    def beam_attack(self):
+
+        self.navigating = True
+        self.beam_status = True
+        self.movement = True
+
+        self.beam_loc = random.randint(1,4)
+
+        if self.beam_loc == 1:
+            self.nativgate_to(600,700)
+        elif self.beam_loc == 2 or self.beam_loc == 3:
+            self.nativgate_to(400,700)
+        elif self.beam_loc == 4:
+            self.nativgate_to(200,700)
+
+
+    def fire_beam(self):
+        new_beam = Boss_Beam(x=self.x, y=self.y, batch=Resources.main_batch)
+        new_beam.image.height = self.y
+        new_beam.y = self.y//2
+        
+        self.new_objects.append(new_beam)
+
+        #Handles movement while beam is firing
+        if self.beam_loc == 1:
+            self.velocity_x = -100
+        elif self.beam_loc == 2:
+            self.velocity_x = -100
+        elif self.beam_loc == 3:
+            self.velocity_x = 100
+        elif self.beam_loc == 4:
+            self.velocity_x = 100
+
+        #Once boss has reached end of listed trajectory, end beam attack
+        if (self.beam_loc == 1 and self.x <= 400) or ((self.beam_loc == 2 or self.beam_loc == 3) and (self.x <= 200 or self.x >=600)) or \
+            (self.beam_loc == 4 and self.x >= 400):
+            self.beam_status = False
+            self.movement = False
+            self.reset_attack_status(func=self.fire_beam)
+
+
+    def nativgate_to(self,location_x,location_y):
+
+        self.navigating = True
+
+        self.velocity_y =  location_y - self.y
+        self.velocity_x = location_x - self.x
+
+        self.nav_x = location_x
+        self.nav_y = location_y
+
+
+    def navigation_check(self):
+
+
+        if self.velocity_x > 0:
+            if self.x > self.nav_x:
+                self.velocity_x = 0
+        elif self.velocity_x < 0:
+            if self.x < self.nav_x:
+                self.velocity_x = 0
+
+        if self.velocity_y > 0:
+            if self.y > self.nav_y:
+                self.velocity_y = 0
+        elif self.velocity_y < 0:
+            if self.y < self.nav_y:
+                self.velocity_y = 0
+
+        if self.velocity_x == 0 and self.velocity_y == 0:
+            self.navigating = False
+
+
+        #self.velocity_y =  self.nav_y - self.y
+        #self.velocity_x = self.nav_x - self.x
+
+
+    def boss_collision(self,other_object):
+        
+        #Prevents collision between mothership and boss
+        if other_object.__class__ == Mothership:
+            self.dead = False
+            other_object.dead = False
+
+        elif other_object.__class__ == Alien:
+            self.dead = False
+            other_object.dead = False
+        else:
+        
+            self.health -= 1
+            print(self.health)
+
+            #Extra damage for killshot
+            if other_object.__class__ == Player_Bullet and other_object.killshot == True:
+                self.health -= 1
+
+            #Boss goes into dying effects if at one health
+            if self.health == 1:
+                self.dying_sequence()
+                          
+
+            else: #If boss isn't dead or dying, then make them indestructable for a second and replace with boss damage picture
+                self.destructable = False
+                self.image = Resources.putin_damage
+                pyglet.clock.schedule_once(self.damage_picture,.1)
+
+    
+    def dying_sequence(self):
+        
+        self.destructable = False
+        self.isdying = True
+        
+        def explosions(dt):
+            rand_x = random.randint(-100,100)
+            rand_y = random.randint(-100,100)
+            new_effect = Effects(effects_code='boss_explosion',x=self.x+rand_x,y=self.y+rand_y,batch=Resources.effects_batch)
+
+            self.new_objects.append(new_effect)
+
+            self.explosion_count += 1
+
+            if self.explosion_count >= 10:
+                pyglet.clock.unschedule(explosions)
+                self.explosion(obj_x=self.x,obj_y=self.y)
+
+        pyglet.clock.schedule_interval(explosions,.5)
+
+
+    def damage_picture(self,dt):
+        self.destructable = True
+        self.image = Resources.putin
+
+
+    def reset_attack_status(self,func=None):
+
+        pyglet.clock.unschedule(func)
+        print('unscheduled')
+
+        time = random.randint(3,5)
+
+        def reset(dt):
+            self.attack_status = False
+            print('reset')
+
+        pyglet.clock.schedule_once(reset,time)
+        
+
+
+class Boss_Bullet(PhyiscalObject):
+
+    def __init__(self,*args,**kwargs):
+
+        super().__init__(img=Resources.boss_lazer,*args,**kwargs)
+
+        pyglet.clock.schedule_interval(self.check_bounds_bullet,.05)
+
+        self.is_alien_bullet = True
+
+    def die(self):
+        self.dead = True
+
+    def check_bounds_bullet(self,dt):
+        min_x = 40
+        min_y = 40
+        max_x = 760
+        max_y = 560
+        if self.x <= min_x:
+            self.die()
+        elif self.x >= max_x:
+            self.die()
+        if self.y <= min_y:
+            self.die()
+        elif self.y >= max_y:
+            self.die()
+
+
+class Boss_Beam(PhyiscalObject):
+
+    def __init__(self,*args,**kwargs):
+
+        super().__init__(img=Resources.boss_beam,*args,**kwargs)
+
+        pyglet.clock.schedule_once(self.die,.05)
+
+        self.is_alien_bullet = True
+
+    def die(self,dt):
+        self.dead = True
+
+    
+
+
+
+
 
 
 
