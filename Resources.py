@@ -47,6 +47,7 @@ center_image(alien_bullet)
 center_image(barrier)
 center_image(barrier_damage)
 center_image(mothership)
+center_image(boss_beam)
 
 animation_center(explosion)
 animation_center(space_ship_shields)
@@ -61,8 +62,6 @@ animation_center(putin_damage)
 animation_center(background)
 
 
-boss_beam.anchor_x = boss_beam.width // 2
-boss_beam.anchor_y = boss_beam.height // 2
 
 
 
@@ -73,3 +72,4 @@ label_batch = pyglet.graphics.Batch()
 end_batch = pyglet.graphics.Batch()
 title_batch = pyglet.graphics.Batch()
 background_batch = pyglet.graphics.Batch()
+load_batch = pyglet.graphics.Batch()

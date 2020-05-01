@@ -667,86 +667,6 @@ class Barrier(PhyiscalObject):
     def ship_barrier_collision(self,other_object):
         self.velocity_y += other_object.velocity_y * .1
 
-
-class EndGame(pyglet.sprite.Sprite):
-    
-    def __init__(self, x=0,y=0, *args,**kwargs):
-        self.key_handler = global_key_handler
-        self.dead = False
-        self.restart = False
-        self.close = False
-        #self.x = x
-        #self.game_window = game_window
-
-    def update(self,dt):
-        if self.key_handler[key.Y]:
-            self.restart = True
-        elif self.key_handler[key.N]:
-            self.close = True
-
-
-class Title(pyglet.sprite.Sprite):
-    
-    def __init__(self, x=0,y=0, *args,**kwargs):
-        self.key_handler = global_key_handler
-        self.dead = False
-        #self.x = x
-        #self.game_window = game_window
-
-    def update(self,dt):
-        if self.key_handler[key.ENTER]:
-            self.dead = True
-
-
-class GamePlay(pyglet.sprite.Sprite):
-
-    def __init__(self, x=0, y=0, *args, **kwargs):
-        self.game_objects = []
-        self.enemy_count = 0
-        self.level = 1
-        self.next_level = False
-        self.boss_level_num = 1
-        self.boss_battle = False
-        self.end_game = False
-        
-
-    def update(self,dt):
-        
-        #If this is a boss battle, then killing the boss should end the game
-        if self.level is self.boss_level_num:
-
-            self.load_boss()
-
-            for obj in self.game_objects:
-                if obj.__class__ == Boss:
-                    self.end_game = True
-                    break
-
-        #Otherwise, count aliens and if aliens are killed, go to next level
-        else:
-        
-            self.enemy_count = 0
-            for obj in self.game_objects:
-                if obj.__class__ == Alien:
-                    self.enemy_count += 1
-
-            if self.enemy_count == 0:
-                self.level += 1
-                self.next_level = True
-
-    def load_boss(self):
-
-        if self.boss_battle == False:
-            
-            self.boss_battle = True
-
-            putin_boss = Boss(x=400,y=400,batch=Resources.main_batch)
-
-            putin_boss.scale = .75
-
-            self.game_objects.append(putin_boss)
-
-        
      
 class Mothership(PhyiscalObject):
     
@@ -814,7 +734,6 @@ class Powerup(PhyiscalObject):
         if self.y <= 5:
             self.y = 5
  
-
 
 class Boss(PhyiscalObject):
 
@@ -969,9 +888,8 @@ class Boss(PhyiscalObject):
 
 
     def fire_beam(self):
-        new_beam = Boss_Beam(x=self.x, y=self.y, batch=Resources.main_batch)
+        new_beam = Boss_Beam(x=self.x, y=self.y//4, batch=Resources.main_batch)
         new_beam.image.height = self.y
-        new_beam.y = self.y//2
         
         self.new_objects.append(new_beam)
 
@@ -1099,7 +1017,6 @@ class Boss(PhyiscalObject):
         pyglet.clock.schedule_once(reset,time)
         
 
-
 class Boss_Bullet(PhyiscalObject):
 
     def __init__(self,*args,**kwargs):
@@ -1130,18 +1047,18 @@ class Boss_Bullet(PhyiscalObject):
 
 class Boss_Beam(PhyiscalObject):
 
-    def __init__(self,*args,**kwargs):
+    def __init__(self, *args, **kwargs):
 
         super().__init__(img=Resources.boss_beam,*args,**kwargs)
 
         pyglet.clock.schedule_once(self.die,.05)
 
         self.is_alien_bullet = True
+        
 
     def die(self,dt):
         self.dead = True
 
-    
 
 class Background(pyglet.sprite.Sprite):
 
@@ -1152,6 +1069,233 @@ class Background(pyglet.sprite.Sprite):
         self.y = y
 
 
+class EndGame(pyglet.sprite.Sprite):
+    
+    def __init__(self, x=0,y=0, *args,**kwargs):
+        self.key_handler = global_key_handler
+        self.dead = False
+        self.restart = False
+        self.close = False
+        #self.x = x
+        #self.game_window = game_window
+
+    def update(self,dt):
+        if self.key_handler[key.Y]:
+            self.restart = True
+        elif self.key_handler[key.N]:
+            self.close = True
+
+
+class Title(pyglet.sprite.Sprite):
+    
+    def __init__(self, x=0,y=0, *args,**kwargs):
+        self.key_handler = global_key_handler
+        self.dead = False
+        #self.x = x
+        #self.game_window = game_window
+
+    def update(self,dt):
+        if self.key_handler[key.ENTER]:
+            self.dead = True
+
+
+class GamePlay(pyglet.sprite.Sprite):
+
+    def __init__(self, x=0, y=0, *args, **kwargs):
+        self.game_objects = []
+        self.enemy_count = 0
+        self.level = 0
+        self.boss_level_num = 10
+        self.boss_battle = False
+        self.end_game = False
+
+        #On initiation, load first level
+
+    def level_load(self):
+        
+        if self.level == 1:
+
+            self.clear_barriers()
+            barriers = self.generate_barriers(3,batch=Resources.main_batch)
+            
+            aliens = self.aliens_on_screen(2,batch=Resources.main_batch)
+            self.game_objects.extend(aliens)
+            self.game_objects.extend(barriers)
+
+        if self.level == 2:
+
+            self.clear_barriers()
+            aliens = self.aliens_on_screen(3,batch=Resources.main_batch)
+            self.game_objects.extend(aliens)
+
+        if self.level == 3:
+
+            aliens = self.aliens_on_screen(4,batch=Resources.main_batch)
+
+        
+
+    def update(self,dt):
+        
+        #If this is a boss battle, then killing the boss should end the game
+        if self.level is self.boss_level_num:
+
+            self.load_boss()
+
+            for obj in self.game_objects:
+                if obj.__class__ == Boss:
+                    self.end_game = True
+                    break
+
+        #Otherwise, count aliens and if aliens are killed, go to next level
+        else:
+        
+            self.enemy_count = 0
+            for obj in self.game_objects:
+                if obj.__class__ == Alien:
+                    self.enemy_count += 1
+
+            if self.enemy_count == 0:
+                self.level += 1
+                self.level_load()
+
+    def load_boss(self):
+
+        if self.boss_battle == False:
+            
+            self.boss_battle = True
+
+            putin_boss = Boss(x=400,y=400,batch=Resources.main_batch)
+
+            putin_boss.scale = .75
+
+            self.game_objects.append(putin_boss)
+
+
+    def restart_game(self,window):
+    
+
+        window.clear()
+
+        del self.game_objects[0:]
+        self.game_objects = []
+        
+        
+        Resources.main_batch = pyglet.graphics.Batch()
+        Resources.effects_batch = pyglet.graphics.Batch()
+        Resources.label_batch = pyglet.graphics.Batch()
+        Resources.end_batch = pyglet.graphics.Batch()
+        Resources.title_batch = pyglet.graphics.Batch()
+
+
+        player_ship = Player(x=400,y=500, batch=Resources.main_batch)
+        self.game_objects.append(player_ship)
+
+        player_ship.dead = False
+        player_ship.lives = 3
+        player_ship.x = 400
+        player_ship.y = 50
+        player_ship.points = 0
+
+        end_obj.restart = False
+        end_obj.close = False
+
+        self.level = 0
+        
+        #score_label = pyglet.text.Label(text="Score: " + str(player_ship.points),x=25,y=550,batch=Resources.label_batch)
+        #level_label = pyglet.text.Label(text='Level: ' + str(self.level),x=400,y=550,batch=Resources.label_batch)
+
+
+    def update_and_add_game_objects(self,dt):
+        #Updates objects and adds objects to game, game decides whether to respawn player here
+        to_add = []
+
+        for obj in self.game_objects:
+            obj.update(dt)
+            self.game_objects.extend(obj.new_objects)
+            obj.new_objects = []
+
+        for to_remove in [obj for obj in self.game_objects if obj.dead]:
+            if not to_remove == player_ship:
+                to_remove.delete() 
+                
+            if to_remove == player_ship:
+                self.respawn(player_ship,self.game_objects)
+            self.game_objects.remove(to_remove)
+
+        self.game_objects.extend(to_add)
+
+
+    def aliens_on_screen(self,num_aliens,batch=None):
+
+        new_aliens = []
+
+        alien_y = 450
+
+            
+        spacing = 800 // (num_aliens + 1)
+        
+        for _i in range(num_aliens):
+
+            alien_x = (spacing * (_i + 1))
+
+            alien = Alien(x=alien_x,y=alien_y,batch=batch)
+
+            #Changes the size
+            alien.scale = 1.4
+
+            new_aliens.append(alien)
+
+        return new_aliens
+
+
+    def generate_barriers(self,num_barriers,batch=None):
+
+        new_barriers = []
+
+        spacing = 800 // (num_barriers + 1)
+        
+        for _i in range(num_barriers):
+
+            barrier_x = (spacing * (_i + 1))
+
+            barrier = Barrier(x=barrier_x,y=200,batch=batch)
+
+            new_barriers.append(barrier)
+
+        return new_barriers
+
+
+    def respawn(self,player,add_list):
+
+        if player.lives > 0:
+        
+            player.dead = False
+            add_list.append(player)
+            player.x = 400
+            player.y = 100
+        else:
+            pass
+
+        def destructable_reset(dt):
+            player.destructable = True
+
+        player.destructable = False
+
+        pyglet.clock.schedule_once(destructable_reset,2)
+
+        player.velocity_x = 0
+        player.velocity_y = 0
+    
+
+    def clear_barriers(self):
+
+        delete_list = []
+
+        for barrier in self.game_objects:
+            if barrier.__class__ is Barrier:
+                delete_list.append(self.game_objects.pop(self.game_objects.index(barrier)))
+                
+        del delete_list
 
 
 

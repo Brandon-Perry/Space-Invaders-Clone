@@ -22,7 +22,7 @@ Objects.level_label
 
 
 #list of game objects on screen
-Objects.game_obj.game_objects = [Objects.player_ship] #+ Sprites.Aliens + Sprites.Barriers 
+Objects.game_obj.game_objects.extend([Objects.player_ship])
 
 
 
@@ -38,12 +38,9 @@ def update(dt):
         Functions.send_mothership(Objects.game_obj.game_objects,batch=Resources.main_batch)
 
 
-        #Checks for next level
-        Functions.next_level()
-
         Functions.collision_check(Objects.game_obj.game_objects)
 
-        Functions.update_and_add_game_objects(Objects.game_obj.game_objects,dt)
+        Objects.game_obj.update_and_add_game_objects(dt)
         
         #Score update
         Objects.score_label.text="Score: " + str(Objects.player_ship.points)
@@ -61,7 +58,7 @@ def update(dt):
                 window.close()
                 
             if Objects.end_obj.restart == True:
-                Functions.restart_game(window,Objects.game_obj.game_objects,Objects.game_obj.level)
+                Objects.game_obj.restart_game(window)
                 
         
     if Objects.title_obj.dead == False:

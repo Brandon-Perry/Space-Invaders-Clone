@@ -4,7 +4,7 @@ import Objects
 import Resources
 import random
 
-
+'''
 def aliens_on_screen(num_aliens,batch=None):
 
     new_aliens = []
@@ -43,7 +43,7 @@ def generate_barriers(num_barriers,batch=None):
         new_barriers.append(barrier)
 
     return new_barriers
-
+'''
 
 def player_lives(num_lives=0,batch=None):
     
@@ -57,7 +57,7 @@ def player_lives(num_lives=0,batch=None):
         player_lives.append(new_sprite)
     return player_lives
   
-
+'''
 def respawn(player,add_list):
 
     if player.lives > 0:
@@ -69,6 +69,16 @@ def respawn(player,add_list):
     else:
         pass
 
+    def destructable_reset(dt):
+        player.destructable = True
+
+    player.destructable = False
+
+    pyglet.clock.schedule_once(destructable_reset,2)
+
+    player.velocity_x = 0
+    player.velocity_y = 0
+'''
 
 def check_endgame(player):
     if player.lives <= 0:
@@ -88,82 +98,6 @@ def collision_check(game_objects):
                 if obj_1.collides_with(obj_2):
                     obj_1.handle_collision_with(obj_2)
                     obj_2.handle_collision_with(obj_1)
-
-
-def update_and_add_game_objects(game_objects,dt):
-    #Updates objects and adds objects to game, game decides whether to respawn player here
-    to_add = []
-
-    for obj in game_objects:
-        obj.update(dt)
-        game_objects.extend(obj.new_objects)
-        obj.new_objects = []
-
-    for to_remove in [obj for obj in game_objects if obj.dead]:
-        if not to_remove == Objects.player_ship:
-            to_remove.delete() 
-            
-        if to_remove == Objects.player_ship:
-            respawn(Objects.player_ship,game_objects)
-        game_objects.remove(to_remove)
-
-    game_objects.extend(to_add)
-
-
-def restart_game(window,game_objects,level):
-    
-    
-
-    window.clear()
-
-    del Objects.game_obj.game_objects[0:]
-    Objects.game_obj.game_objects = []
-    
-    
-    Resources.main_batch = pyglet.graphics.Batch()
-    Resources.effects_batch = pyglet.graphics.Batch()
-    Resources.label_batch = pyglet.graphics.Batch()
-    Resources.end_batch = pyglet.graphics.Batch()
-    Resources.title_batch = pyglet.graphics.Batch()
-
-    print(game_objects)
-
-    #Alien Sprites
-    Objects.game_obj.game_objects.extend(aliens_on_screen(3,batch=Resources.main_batch))
-
-    #Barriers
-    Objects.game_obj.game_objects.extend(generate_barriers(4,batch=Resources.main_batch))
-
-    Objects.player_ship = Objects.Player(x=400,y=500, batch=Resources.main_batch)
-    Objects.game_obj.game_objects.append(Objects.player_ship)
-
-    Objects.player_ship.dead = False
-    Objects.player_ship.lives = 3
-    Objects.player_ship.x = 400
-    Objects.player_ship.y = 50
-    Objects.player_ship.points = 0
-
-    Objects.end_obj.restart = False
-    Objects.end_obj.close = False
-
-    Objects.game_obj.next_level = False
-    Objects.game_obj.level = 1
-    
-    Objects.score_label = pyglet.text.Label(text="Score: " + str(Objects.player_ship.points),x=25,y=550,batch=Resources.label_batch)
-    Objects.level_label = pyglet.text.Label(text='Level: ' + str(Objects.game_obj.level),x=400,y=550,batch=Resources.label_batch)
-
-    print(game_objects)
-
-
-def next_level():
-    if Objects.game_obj.next_level == True and Objects.game_obj.boss_battle == False:
-        
-        Objects.game_obj.game_objects.extend(aliens_on_screen(2+Objects.game_obj.level,batch=Resources.main_batch))
-        
-        Objects.game_obj.next_level = False
-
-
-
 
 
 def send_mothership(game_objects,batch=None):
